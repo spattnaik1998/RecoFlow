@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import NavBar from "@/components/NavBar";
 
 export const metadata: Metadata = {
   title: "RecoFlow — The Library of Nyx",
@@ -38,6 +39,8 @@ export default function RootLayout({
         <div className="grain-overlay" aria-hidden="true" />
         {/* Edge vignette */}
         <div className="vignette" aria-hidden="true" />
+        {/* Persistent nav — renders only when authenticated, hidden on / and /auth */}
+        <NavBar />
         {children}
       </body>
     </html>

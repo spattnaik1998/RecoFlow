@@ -127,6 +127,7 @@ h1, h2, h3, .font-cinzel {
   content: '';
   position: absolute;
   border: 1px solid rgba(200, 169, 110, 0.15);
+  pointer-events: none;
 }
 
 .victorian-border::before {
@@ -352,6 +353,7 @@ h1, h2, h3, .font-cinzel {
   color: var(--gold-dim);
   font-family: Georgia, serif;
   line-height: 1;
+  pointer-events: none;
 }
 
 /* ─── Book Card ───────────────────────────────────────────────────────────── */

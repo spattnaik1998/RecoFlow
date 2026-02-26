@@ -1,0 +1,382 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=IM+Fell+English:ital@0;1&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Base ─────────────────────────────────────────────────────────────────── */
+
+:root {
+  --background: #0D0A07;
+  --gold: #C8A96E;
+  --gold-light: #E8C98A;
+  --gold-dim: #8B7340;
+  --forest: #2C4A1E;
+  --brown: #8B4513;
+  --parchment: #E8D5B7;
+  --parchment-dim: #B8A58A;
+  --ash: #4A4035;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  background-color: var(--background);
+  color: var(--parchment);
+  font-family: 'IM Fell English', Georgia, serif;
+  overflow-x: hidden;
+}
+
+/* ─── Typography ──────────────────────────────────────────────────────────── */
+
+h1, h2, h3, .font-cinzel {
+  font-family: 'Cinzel Decorative', 'Times New Roman', serif;
+}
+
+.text-gold {
+  color: var(--gold);
+}
+
+.text-parchment {
+  color: var(--parchment);
+}
+
+/* ─── Victorian Film Grain ────────────────────────────────────────────────── */
+
+.grain-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  animation: grain 8s steps(10) infinite;
+}
+
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-2%, -3%); }
+  20% { transform: translate(3%, 2%); }
+  30% { transform: translate(-1%, 4%); }
+  40% { transform: translate(4%, -1%); }
+  50% { transform: translate(-3%, 3%); }
+  60% { transform: translate(2%, -4%); }
+  70% { transform: translate(-4%, 1%); }
+  80% { transform: translate(1%, -2%); }
+  90% { transform: translate(-2%, 4%); }
+}
+
+/* ─── Candle Flicker ──────────────────────────────────────────────────────── */
+
+@keyframes candleFlicker {
+  0%, 100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(200, 169, 110, 0.8));
+    transform: scaleY(1) scaleX(1);
+  }
+  15% {
+    opacity: 0.88;
+    filter: drop-shadow(0 0 12px rgba(200, 169, 110, 0.9));
+    transform: scaleY(1.04) scaleX(0.96);
+  }
+  30% {
+    opacity: 0.95;
+    filter: drop-shadow(0 0 6px rgba(200, 169, 110, 0.6));
+    transform: scaleY(0.97) scaleX(1.02);
+  }
+  50% {
+    opacity: 0.9;
+    filter: drop-shadow(0 0 15px rgba(200, 169, 110, 1));
+    transform: scaleY(1.06) scaleX(0.95);
+  }
+  70% {
+    opacity: 0.93;
+    filter: drop-shadow(0 0 8px rgba(200, 169, 110, 0.7));
+    transform: scaleY(0.98) scaleX(1.01);
+  }
+  85% {
+    opacity: 0.97;
+    filter: drop-shadow(0 0 10px rgba(200, 169, 110, 0.85));
+    transform: scaleY(1.02) scaleX(0.98);
+  }
+}
+
+.candle-flame {
+  animation: candleFlicker 3s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+/* ─── Gold Border Ornament ────────────────────────────────────────────────── */
+
+.victorian-border {
+  border: 1px solid rgba(200, 169, 110, 0.3);
+  box-shadow:
+    inset 0 0 30px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(200, 169, 110, 0.05);
+  position: relative;
+}
+
+.victorian-border::before,
+.victorian-border::after {
+  content: '';
+  position: absolute;
+  border: 1px solid rgba(200, 169, 110, 0.15);
+}
+
+.victorian-border::before {
+  inset: 4px;
+}
+
+/* ─── Gold Divider ────────────────────────────────────────────────────────── */
+
+.gold-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(200, 169, 110, 0.6),
+    transparent
+  );
+  margin: 1.5rem 0;
+}
+
+.gold-divider-center {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--gold-dim);
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+}
+
+.gold-divider-center::before,
+.gold-divider-center::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(200, 169, 110, 0.5)
+  );
+}
+
+.gold-divider-center::after {
+  background: linear-gradient(
+    to left,
+    transparent,
+    rgba(200, 169, 110, 0.5)
+  );
+}
+
+/* ─── Inputs ──────────────────────────────────────────────────────────────── */
+
+.nyx-input {
+  background: rgba(13, 10, 7, 0.8);
+  border: 1px solid rgba(200, 169, 110, 0.3);
+  color: var(--parchment);
+  font-family: 'IM Fell English', serif;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.nyx-input:focus {
+  border-color: rgba(200, 169, 110, 0.7);
+  box-shadow: 0 0 15px rgba(200, 169, 110, 0.1);
+}
+
+.nyx-input::placeholder {
+  color: rgba(184, 165, 138, 0.4);
+  font-style: italic;
+}
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────── */
+
+.btn-primary {
+  background: linear-gradient(135deg, #C8A96E 0%, #E8C98A 50%, #C8A96E 100%);
+  color: #0D0A07;
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  padding: 0.875rem 2.5rem;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: opacity 0.2s, transform 0.2s;
+  text-transform: uppercase;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(200, 169, 110, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(200, 169, 110, 0.4);
+  color: var(--gold);
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  padding: 0.625rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-transform: uppercase;
+}
+
+.btn-ghost:hover {
+  border-color: rgba(200, 169, 110, 0.8);
+  background: rgba(200, 169, 110, 0.05);
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--brown);
+  border-radius: 3px;
+}
+
+/* ─── Animations ──────────────────────────────────────────────────────────── */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.6s ease-out forwards;
+}
+
+/* ─── Loading Dots ────────────────────────────────────────────────────────── */
+
+.loading-dots span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  margin: 0 3px;
+  animation: loadingDot 1.4s ease-in-out infinite;
+}
+
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes loadingDot {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* ─── Nyx Speech Bubble ───────────────────────────────────────────────────── */
+
+.nyx-speech {
+  background: rgba(26, 18, 8, 0.95);
+  border: 1px solid rgba(200, 169, 110, 0.35);
+  border-radius: 2px;
+  padding: 1.25rem 1.5rem;
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  color: var(--parchment-dim);
+  line-height: 1.7;
+  position: relative;
+}
+
+.nyx-speech::before {
+  content: '\201C';
+  position: absolute;
+  top: -0.5rem;
+  left: 1rem;
+  font-size: 2rem;
+  color: var(--gold-dim);
+  font-family: Georgia, serif;
+  line-height: 1;
+}
+
+/* ─── Book Card ───────────────────────────────────────────────────────────── */
+
+.book-card {
+  background: linear-gradient(135deg, rgba(26, 18, 8, 0.9) 0%, rgba(44, 30, 15, 0.6) 100%);
+  border: 1px solid rgba(200, 169, 110, 0.2);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.book-card:hover {
+  border-color: rgba(200, 169, 110, 0.5);
+  box-shadow: 0 0 30px rgba(200, 169, 110, 0.08);
+}
+
+/* ─── Vignette ────────────────────────────────────────────────────────────── */
+
+.vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 50%,
+    rgba(13, 10, 7, 0.6) 100%
+  );
+}

@@ -9,9 +9,10 @@ import { NYX_DIALOGUE } from "@/lib/nyx-dialogue";
 
 interface AuthFormProps {
   redirectTo: string;
+  callbackError?: string | null;
 }
 
-export default function AuthForm({ redirectTo }: AuthFormProps) {
+export default function AuthForm({ redirectTo, callbackError }: AuthFormProps) {
   const router = useRouter();
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -19,7 +20,11 @@ export default function AuthForm({ redirectTo }: AuthFormProps) {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(
+    callbackError === "confirmation_failed"
+      ? "The confirmation link has expired or is invalid. Please sign in or request a new link."
+      : ""
+  );
   const [message, setMessage] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -37,6 +42,7 @@ export default function AuthForm({ redirectTo }: AuthFormProps) {
           password,
           options: {
             data: { display_name: displayName || null },
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
         });
         if (error) throw error;

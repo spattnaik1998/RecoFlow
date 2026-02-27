@@ -36,8 +36,8 @@ export default function NavBar() {
     setSigningOut(true);
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
+    // Hard redirect so all React state, server cache, and cookies are fully cleared
+    window.location.href = "/";
   }
 
   return (

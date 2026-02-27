@@ -45,8 +45,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from auth page
-  const isAuth = AUTH_ROUTES.some((route) => pathname.startsWith(route));
+  // Redirect authenticated users away from auth page (but not the callback route)
+  const isAuth =
+    AUTH_ROUTES.some((route) => pathname.startsWith(route)) &&
+    pathname !== "/auth/callback";
   if (isAuth && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/enter";

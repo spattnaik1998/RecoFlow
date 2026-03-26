@@ -121,7 +121,8 @@ export function buildRecommendationPrompt(
   intersection: ThematicIntersection,
   brainDump: BrainDumpAnswer[],
   searchResults: string,
-  userProfile?: UserProfile
+  userProfile?: UserProfile,
+  preferenceContext?: string
 ): string {
   const qaSection = brainDump
     .map((qa) => `Q (${qa.category}): ${qa.question}\nA: ${qa.answer}`)
@@ -142,7 +143,7 @@ SHARED CONFLUENCES: ${intersection.intersection.confluences.join("; ")}
 TENSIONS: ${intersection.intersection.tensions.join("; ")}
 
 BRAIN DUMP (reader's own words):
-${qaSection}${profileContext}
+${qaSection}${profileContext}${preferenceContext ?? ""}
 
 SEARCH RESULTS FOR CANDIDATE BOOKS:
 ${searchResults}
@@ -223,13 +224,15 @@ export async function generateRecommendations(
   intersection: ThematicIntersection,
   brainDump: BrainDumpAnswer[],
   searchResults: string,
-  userProfile?: UserProfile
+  userProfile?: UserProfile,
+  preferenceContext?: string
 ): Promise<Recommendation[]> {
   const prompt = buildRecommendationPrompt(
     intersection,
     brainDump,
     searchResults,
-    userProfile
+    userProfile,
+    preferenceContext
   );
 
   const response = await anthropic.messages.create({

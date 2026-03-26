@@ -68,6 +68,14 @@ export default function NavBar() {
           Your Library
         </Link>
 
+        <Link
+          href="/preferences"
+          className="font-fell italic text-sm"
+          style={{ color: "rgba(232,213,183,0.55)" }}
+        >
+          Preferences
+        </Link>
+
         <button
           onClick={handleSignOut}
           disabled={signingOut}

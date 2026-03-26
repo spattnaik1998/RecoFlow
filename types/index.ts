@@ -196,6 +196,74 @@ export interface ProfileDashboardData {
   total_session_count: number;
 }
 
+// ─── Circles ─────────────────────────────────────────────────────────────────
+
+export type CircleRole = "owner" | "editor" | "viewer";
+export type CircleStatus = "active" | "archived";
+export type CircleVoteValue = "like" | "neutral" | "dislike";
+
+export interface Circle {
+  id: string;
+  name: string;
+  owner_id: string;
+  status: CircleStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CircleMember {
+  id: string;
+  circle_id: string;
+  user_id: string;
+  role: CircleRole;
+  joined_at: string;
+}
+
+export interface CircleInvite {
+  id: string;
+  circle_id: string;
+  email: string;
+  expires_at: string;
+  accepted_at: string | null;
+  created_at: string;
+}
+
+export interface CircleComment {
+  id: string;
+  circle_id: string;
+  session_id: string | null;
+  recommendation_id: string | null;
+  user_id: string;
+  body: string;
+  created_at: string;
+}
+
+export interface CircleVote {
+  id: string;
+  circle_id: string;
+  recommendation_id: string;
+  user_id: string;
+  vote: CircleVoteValue;
+  created_at: string;
+}
+
+export interface CircleWithMembership extends Circle {
+  member_count: number;
+  my_role: CircleRole;
+}
+
+export interface CreateCircleRequest {
+  name: string;
+}
+
+export interface InviteRequest {
+  email: string;
+}
+
+export interface JoinCircleRequest {
+  token: string;
+}
+
 // ─── Exports & Digests ───────────────────────────────────────────────────────
 
 export type ExportStatus = "queued" | "generating" | "ready" | "failed";

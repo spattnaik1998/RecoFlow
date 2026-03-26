@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import RecommendationReveal from "@/components/RecommendationReveal";
 import CandleFlicker from "@/components/CandleFlicker";
+import ExportPanel from "@/components/ExportPanel";
 import { NYX_DIALOGUE } from "@/lib/nyx-dialogue";
 import { SESSION_KEYS } from "@/types";
 import type { Recommendation } from "@/types";
@@ -73,12 +74,24 @@ export default function RecommendationsPage() {
         {/* Dramatic reveal */}
         <RecommendationReveal recommendations={recommendations} sessionId={sessionId} />
 
+        {/* Export */}
+        {sessionId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 10, duration: 1 }}
+            className="mt-10 max-w-2xl mx-auto"
+          >
+            <ExportPanel sessionId={sessionId} />
+          </motion.div>
+        )}
+
         {/* Actions */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 10, duration: 1 }}
-          className="mt-16 flex flex-col sm:flex-row gap-4 justify-center"
+          className="mt-10 flex flex-col sm:flex-row gap-4 justify-center"
         >
           <Link href="/enter" className="btn-ghost text-center">
             Begin a New Consultation

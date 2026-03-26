@@ -8,6 +8,9 @@
     },
     "app/api/generate-questions/route.ts": {
       "maxDuration": 60
+    },
+    "app/api/exports/route.ts": {
+      "maxDuration": 30
     }
   }
 }

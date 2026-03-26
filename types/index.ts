@@ -196,6 +196,56 @@ export interface ProfileDashboardData {
   total_session_count: number;
 }
 
+// ─── Exports & Digests ───────────────────────────────────────────────────────
+
+export type ExportStatus = "queued" | "generating" | "ready" | "failed";
+export type ExportType = "pdf" | "json";
+export type ExportStyle = "branded" | "minimal";
+
+export interface Export {
+  id: string;
+  session_id: string;
+  user_id: string;
+  type: ExportType;
+  style: ExportStyle;
+  status: ExportStatus;
+  file_url: string | null;
+  share_id: string | null;
+  error_message: string | null;
+  sent_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateExportRequest {
+  session_id: string;
+  type: ExportType;
+  style: ExportStyle;
+}
+
+export interface DigestContent {
+  session_date: string;
+  books_read: { title: string; author: string }[];
+  intellectual_territory: string;
+  confluences: string[];
+  recommendations: {
+    rank: number;
+    title: string;
+    author: string;
+    thematic_connection: string;
+    why_now: string;
+  }[];
+  profile_name: string | null;
+}
+
+export interface DigestPreferences {
+  user_id: string;
+  default_style: ExportStyle;
+  delivery_email: string | null;
+  weekly_digest_enabled: boolean;
+  updated_at: string;
+}
+
 // ─── Session Storage Keys ────────────────────────────────────────────────────
 
 export const SESSION_KEYS = {

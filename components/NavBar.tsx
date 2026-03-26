@@ -69,6 +69,14 @@ export default function NavBar() {
         </Link>
 
         <Link
+          href="/profile"
+          className="font-fell italic text-sm"
+          style={{ color: "rgba(232,213,183,0.55)" }}
+        >
+          Profile
+        </Link>
+
+        <Link
           href="/preferences"
           className="font-fell italic text-sm"
           style={{ color: "rgba(232,213,183,0.55)" }}

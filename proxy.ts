@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_ROUTES = ["/enter", "/session", "/recommendations", "/library", "/preferences"];
+const PROTECTED_ROUTES = ["/enter", "/session", "/recommendations", "/library", "/preferences", "/profile"];
 const AUTH_ROUTES = ["/auth"];
 
 export async function proxy(request: NextRequest) {

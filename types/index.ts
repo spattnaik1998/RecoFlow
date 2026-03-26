@@ -152,6 +152,50 @@ export interface GetRecommendationsResponse {
   session_id: string;
 }
 
+// ─── Profile Dashboard ───────────────────────────────────────────────────────
+
+export interface ThemeCluster {
+  theme: string;
+  frequency: number;     // number of sessions that mentioned this theme
+  last_seen: string;     // ISO date of most recent session containing this theme
+}
+
+export interface ProfileSummary {
+  display_name: string | null;
+  member_since: string;        // ISO date of earliest session
+  total_sessions: number;
+  total_recommendations: number;
+  top_themes: ThemeCluster[];
+  intellectual_territory: string;  // generated from recurring themes
+  emotional_undercurrent: string;
+}
+
+export interface SessionSummaryRow {
+  id: string;
+  created_at: string;
+  status: string;
+  books: { title: string; author: string }[];
+  top_recommendation: { title: string; author: string } | null;
+  theme_tags: string[];
+}
+
+export interface ProfileInsight {
+  type:
+    | "recurring_theme"
+    | "neglected_theme"
+    | "author_affinity"
+    | "format_tendency";
+  label: string;
+  description: string;
+}
+
+export interface ProfileDashboardData {
+  summary: ProfileSummary;
+  insights: ProfileInsight[];
+  recent_sessions: SessionSummaryRow[];
+  total_session_count: number;
+}
+
 // ─── Session Storage Keys ────────────────────────────────────────────────────
 
 export const SESSION_KEYS = {

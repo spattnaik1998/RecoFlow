@@ -9,12 +9,14 @@ import { NYX_DIALOGUE, nyxRevealIntro } from "@/lib/nyx-dialogue";
 
 interface RecommendationRevealProps {
   recommendations: Recommendation[];
+  sessionId?: string;
 }
 
 const REVEAL_DELAY_MS = NYX_DIALOGUE.recs_reveal_delay_ms;
 
 export default function RecommendationReveal({
   recommendations,
+  sessionId,
 }: RecommendationRevealProps) {
   const [revealedCount, setRevealedCount] = useState(0);
 
@@ -62,6 +64,11 @@ export default function RecommendationReveal({
             rank={rec.rank}
             revealed={i < revealedCount}
             delay={0}
+            feedbackState={
+              sessionId && rec.id
+                ? { recommendationId: rec.id, sessionId }
+                : undefined
+            }
           />
         ))}
       </div>

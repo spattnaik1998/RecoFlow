@@ -51,12 +51,54 @@ export interface BrainDumpAnswer {
 // ─── Recommendations ─────────────────────────────────────────────────────────
 
 export interface Recommendation {
+  id?: string; // DB row id, present after persistence; absent in transient session-storage use
   title: string;
   author: string;
   cover_url?: string;
   thematic_connection: string;
   why_now: string;
   rank: number;
+}
+
+// ─── Feedback & Preferences ──────────────────────────────────────────────────
+
+export type FeedbackVote = "like" | "dislike";
+export type DislikeReason =
+  | "too_academic"
+  | "too_commercial"
+  | "already_read"
+  | "wrong_tone"
+  | "not_relevant";
+
+export interface RecommendationFeedback {
+  id: string;
+  recommendation_id: string;
+  session_id: string;
+  user_id: string;
+  vote: FeedbackVote;
+  reason?: DislikeReason;
+  created_at: string;
+}
+
+export interface UserPreferences {
+  user_id: string;
+  blocked_authors: string[];
+  blocked_titles: string[];
+  blocked_themes: string[];
+  preferred_themes: string[];
+  updated_at: string;
+}
+
+export interface FeedbackRequest {
+  vote: FeedbackVote;
+  reason?: DislikeReason;
+}
+
+export interface PreferencesPatchRequest {
+  blocked_authors?: string[];
+  blocked_titles?: string[];
+  blocked_themes?: string[];
+  preferred_themes?: string[];
 }
 
 // ─── Session Types ────────────────────────────────────────────────────────────

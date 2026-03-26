@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { getRecommendations } from "@/lib/recommendation-engine";
+import { getUserPreferences } from "@/lib/preference-engine";
 import type { GetRecommendationsRequest } from "@/types";
 
 export async function POST(req: NextRequest) {
@@ -23,24 +24,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Fetch user profile for personalization
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
+    // Fetch user profile and preferences in parallel for personalization
+    const [{ data: profile }, userPreferences] = await Promise.all([
+      supabase.from("profiles").select("*").eq("id", user.id).single(),
+      getUserPreferences(user.id, supabase),
+    ]);
 
-    // Generate recommendations
+    // Generate recommendations (preference-aware)
     const recommendations = await getRecommendations(
       intersection,
       brain_dump,
-      profile ?? undefined
+      profile ?? undefined,
+      userPreferences
     );
 
-    // Persist recommendations to Supabase
+    // Persist recommendations and fetch back with DB-assigned ids
     const serviceClient = createServiceRoleClient();
 
-    const { error: insertError } = await serviceClient
+    const { data: inserted, error: insertError } = await serviceClient
       .from("recommendations")
       .insert(
         recommendations.map((rec) => ({
@@ -52,11 +53,18 @@ export async function POST(req: NextRequest) {
           thematic_connection: rec.thematic_connection,
           rank: rec.rank,
         }))
-      );
+      )
+      .select("id, rank");
 
     if (insertError) {
       console.error("[get-recommendations] insert error:", insertError);
     }
+
+    // Attach DB ids to recommendations so the client can submit feedback
+    const recommendationsWithIds = recommendations.map((rec) => {
+      const row = inserted?.find((r) => r.rank === rec.rank);
+      return row ? { ...rec, id: row.id as string } : rec;
+    });
 
     // Update session status to completed
     await serviceClient
@@ -77,7 +85,7 @@ export async function POST(req: NextRequest) {
       })
       .eq("id", user.id);
 
-    return NextResponse.json({ recommendations, session_id });
+    return NextResponse.json({ recommendations: recommendationsWithIds, session_id });
   } catch (err) {
     console.error("[get-recommendations]", err);
     return NextResponse.json(

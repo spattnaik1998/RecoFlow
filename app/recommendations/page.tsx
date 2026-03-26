@@ -13,6 +13,7 @@ import type { Recommendation } from "@/types";
 export default function RecommendationsPage() {
   const router = useRouter();
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [sessionId, setSessionId] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,6 +25,8 @@ export default function RecommendationsPage() {
     try {
       const recs = JSON.parse(raw) as Recommendation[];
       setRecommendations(recs);
+      const sid = sessionStorage.getItem(SESSION_KEYS.SESSION_ID) ?? undefined;
+      setSessionId(sid);
     } catch {
       router.push("/enter");
     } finally {
@@ -68,7 +71,7 @@ export default function RecommendationsPage() {
         </motion.div>
 
         {/* Dramatic reveal */}
-        <RecommendationReveal recommendations={recommendations} />
+        <RecommendationReveal recommendations={recommendations} sessionId={sessionId} />
 
         {/* Actions */}
         <motion.div

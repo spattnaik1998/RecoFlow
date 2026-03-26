@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import CandleFlicker from "@/components/CandleFlicker";
+import ExportPanel from "@/components/ExportPanel";
 import { NYX_DIALOGUE } from "@/lib/nyx-dialogue";
 import type { ReadingSession, Book, Recommendation } from "@/types";
 
@@ -195,6 +196,8 @@ export default function LibraryClient() {
                         </div>
                       ))}
                     </div>
+                    {/* Export for this session */}
+                    <ExportPanel sessionId={session.id} />
                   </motion.div>
                 )}
               </motion.div>

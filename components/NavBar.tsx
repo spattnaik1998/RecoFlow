@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import CircleSwitcher from "@/components/CircleSwitcher";
 import type { User } from "@supabase/supabase-js";
 
 // Pages where the nav should be hidden entirely
@@ -60,6 +61,8 @@ export default function NavBar() {
 
       {/* Right-side actions */}
       <div className="flex items-center gap-6">
+        <CircleSwitcher />
+
         <Link
           href="/library"
           className="font-fell italic text-sm"

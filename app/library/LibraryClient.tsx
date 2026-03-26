@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import CandleFlicker from "@/components/CandleFlicker";
 import ExportPanel from "@/components/ExportPanel";
 import { NYX_DIALOGUE } from "@/lib/nyx-dialogue";
+import { getActiveCircleId } from "@/components/CircleSwitcher";
 import type { ReadingSession, Book, Recommendation } from "@/types";
 
 interface SessionWithDetails extends ReadingSession {
@@ -18,22 +19,40 @@ export default function LibraryClient() {
   const [sessions, setSessions] = useState<SessionWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [activeCircleId, setActiveCircleId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadSessions();
+    const circleId = getActiveCircleId();
+    setActiveCircleId(circleId);
+    loadSessions(circleId);
+
+    function onCircleChanged(e: Event) {
+      const detail = (e as CustomEvent<{ circleId: string | null }>).detail;
+      setActiveCircleId(detail.circleId);
+      loadSessions(detail.circleId);
+    }
+    window.addEventListener("circle-changed", onCircleChanged);
+    return () => window.removeEventListener("circle-changed", onCircleChanged);
   }, []);
 
-  async function loadSessions() {
+  async function loadSessions(circleId?: string | null) {
+    setLoading(true);
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { setLoading(false); return; }
 
-    const { data: sessionData } = await supabase
+    let query = supabase
       .from("reading_sessions")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(20);
+
+    if (circleId) {
+      query = query.eq("circle_id", circleId);
+    }
+
+    const { data: sessionData } = await query;
 
     if (!sessionData) { setLoading(false); return; }
 
@@ -92,7 +111,7 @@ export default function LibraryClient() {
             {NYX_DIALOGUE.library_header}
           </h1>
           <p className="font-fell italic" style={{ color: "rgba(232,213,183,0.5)" }}>
-            {NYX_DIALOGUE.library_subtitle}
+            {activeCircleId ? "Showing shared consultations for this circle." : NYX_DIALOGUE.library_subtitle}
           </p>
           <div className="gold-divider-center mt-4">✦</div>
         </motion.div>

@@ -10,6 +10,7 @@ import CandleFlicker from "@/components/CandleFlicker";
 import { NYX_DIALOGUE } from "@/lib/nyx-dialogue";
 import { SESSION_KEYS } from "@/types";
 import type { Book } from "@/types";
+import { getActiveCircleId } from "@/components/CircleSwitcher";
 
 const MAX_BOOKS = 5;
 const EMPTY_BOOK: Partial<Book> = { title: "", author: "", goodreads_url: "" };
@@ -56,9 +57,13 @@ export default function EnterPage() {
         return;
       }
 
+      const activeCircleId = getActiveCircleId();
+      const sessionInsert: Record<string, unknown> = { user_id: user.id, status: "active" };
+      if (activeCircleId) sessionInsert.circle_id = activeCircleId;
+
       const { data: session, error: sessionError } = await supabase
         .from("reading_sessions")
-        .insert({ user_id: user.id, status: "active" })
+        .insert(sessionInsert)
         .select("id")
         .single();
 

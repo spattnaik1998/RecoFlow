@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Recommendation, FeedbackVote, DislikeReason } from "@/types";
+import VoteControls from "@/components/VoteControls";
 
 interface FeedbackState {
   recommendationId: string;
@@ -15,6 +16,7 @@ interface BookCardProps {
   revealed?: boolean;
   delay?: number;
   feedbackState?: FeedbackState;
+  circleContext?: { circleId: string };
 }
 
 const RANK_LABELS = [
@@ -39,6 +41,7 @@ export default function BookCard({
   revealed = true,
   delay = 0,
   feedbackState,
+  circleContext,
 }: BookCardProps) {
   const [vote, setVote] = useState<FeedbackVote | null>(null);
   const [showReasons, setShowReasons] = useState(false);
@@ -240,6 +243,16 @@ export default function BookCard({
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+      )}
+
+      {/* Circle vote controls */}
+      {circleContext && recommendation.id && (
+        <div className="mt-2">
+          <VoteControls
+            recommendationId={recommendation.id}
+            circleId={circleContext.circleId}
+          />
         </div>
       )}
 

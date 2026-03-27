@@ -63,7 +63,7 @@ export default function Nyx({ dialogue, onDialogueComplete, className = "" }: Ny
             className="text-xs px-1.5 py-0.5 rounded"
             style={{ background: "rgba(99,135,255,0.1)", color: "var(--brand-subtle)", fontSize: "0.6rem" }}
           >
-            AI
+            Guide
           </span>
         </div>
         <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>

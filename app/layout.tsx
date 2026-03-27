@@ -3,14 +3,14 @@ import "./globals.css";
 import NavBar from "@/components/NavBar";
 
 export const metadata: Metadata = {
-  title: "RecoFlow — AI Reading Intelligence",
+  title: "RecoFlow — Intelligence-Driven Book Recommendations",
   description:
     "RecoFlow analyzes what your team is reading, finds the hidden connections between books, and recommends exactly what to read next.",
-  keywords: ["book recommendations", "AI", "reading", "team learning", "L&D"],
+  keywords: ["book recommendations", "reading", "team learning", "L&D", "professional development"],
   openGraph: {
-    title: "RecoFlow — AI Reading Intelligence",
+    title: "RecoFlow — Intelligence-Driven Book Recommendations",
     description:
-      "Smarter reading, for teams that think. AI-powered book recommendations that compound.",
+      "Smarter reading, for teams that think. Data-driven book recommendations that compound over time.",
     type: "website",
   },
 };

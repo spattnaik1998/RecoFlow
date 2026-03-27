@@ -112,7 +112,7 @@ export default function AuthForm({ redirectTo, callbackError }: AuthFormProps) {
           <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
             {isSignIn
               ? "Sign in to continue to RecoFlow"
-              : "Start getting smarter book recommendations"}
+              : "Start getting intelligence-driven book recommendations"}
           </p>
         </div>
 

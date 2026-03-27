@@ -12,7 +12,7 @@ const FEATURES = [
       </svg>
     ),
     title: "Thematic Intersection",
-    desc: "AI finds the hidden conceptual threads connecting everything you're reading at once.",
+    desc: "Finds the hidden conceptual threads connecting everything you're reading at once.",
   },
   {
     icon: (
@@ -22,7 +22,7 @@ const FEATURES = [
       </svg>
     ),
     title: "10 Ranked Picks",
-    desc: "Sonnet 4.6 ranks candidates by thematic resonance, intellectual tension, and right-now relevance.",
+    desc: "Candidates ranked by thematic resonance, intellectual tension, and right-now relevance.",
   },
   {
     icon: (
@@ -48,7 +48,7 @@ const FEATURES = [
 
 const STEPS = [
   { n: "01", label: "Enter your books", detail: "Tell us what you're reading right now — 1 to 5 titles." },
-  { n: "02", label: "Nyx analyzes", detail: "AI maps the thematic intersections across your reading list." },
+  { n: "02", label: "Deep analysis", detail: "Maps the thematic intersections across your reading list." },
   { n: "03", label: "Brain dump", detail: "Answer three introspective questions to sharpen the signal." },
   { n: "04", label: "Get your list", detail: "10 ranked recommendations, explained. Yours to keep." },
 ];
@@ -93,7 +93,7 @@ export default function LandingClient() {
               style={{ background: "var(--brand)", boxShadow: "0 0 6px var(--brand)" }}
             />
             <span className="text-xs font-medium" style={{ color: "var(--brand-subtle)" }}>
-              AI Reading Intelligence
+              Intelligence-Driven Book Recommendations
             </span>
           </motion.div>
 
@@ -110,8 +110,8 @@ export default function LandingClient() {
               letterSpacing: "-0.02em",
             }}
           >
-            Smarter reading,<br />
-            <span style={{ color: "var(--brand)" }}>for teams that think.</span>
+            Discover your next great read,<br />
+            <span style={{ color: "var(--brand)" }}>backed by deep analysis.</span>
           </motion.h1>
 
           {/* Subhead */}
@@ -123,7 +123,7 @@ export default function LandingClient() {
             style={{ color: "var(--text-secondary)", maxWidth: 520, lineHeight: 1.7 }}
           >
             RecoFlow analyzes what you're reading, finds the hidden connections,
-            and recommends exactly what to read next — every time.
+            and surfaces exactly what to read next — every time.
           </motion.p>
 
           {/* CTAs */}
@@ -212,7 +212,7 @@ export default function LandingClient() {
               className="font-display"
               style={{ fontSize: "clamp(1.6rem, 3vw, 2.5rem)", color: "var(--text-primary)", letterSpacing: "-0.02em" }}
             >
-              Built for serious readers
+              Built for professionals who read
             </h2>
           </motion.div>
 

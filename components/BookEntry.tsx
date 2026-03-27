@@ -21,20 +21,18 @@ export default function BookEntry({
   const [showUrl, setShowUrl] = useState(false);
 
   return (
-    <div className="victorian-border p-4 relative group">
-      {/* Book number */}
+    <div className="card p-4">
       <div className="flex items-center justify-between mb-3">
-        <span
-          className="font-cinzel text-xs tracking-widest uppercase"
-          style={{ color: "rgba(200,169,110,0.5)" }}
-        >
-          Volume {index + 1}
+        <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+          Book {index + 1}
         </span>
         {canRemove && (
           <button
             onClick={() => onRemove?.(index)}
-            className="text-xs font-fell italic"
-            style={{ color: "rgba(200,169,110,0.4)" }}
+            className="text-xs transition-colors duration-150"
+            style={{ color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--danger)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-muted)"; }}
             aria-label="Remove book"
           >
             Remove
@@ -42,10 +40,10 @@ export default function BookEntry({
         )}
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         <input
           type="text"
-          className="nyx-input"
+          className="input"
           placeholder="Title"
           value={book.title ?? ""}
           onChange={(e) => onChange(index, { ...book, title: e.target.value })}
@@ -53,32 +51,31 @@ export default function BookEntry({
         />
         <input
           type="text"
-          className="nyx-input"
+          className="input"
           placeholder="Author"
           value={book.author ?? ""}
           onChange={(e) => onChange(index, { ...book, author: e.target.value })}
           autoComplete="off"
         />
 
-        {/* Goodreads URL toggle */}
         {!showUrl ? (
           <button
             type="button"
             onClick={() => setShowUrl(true)}
-            className="text-xs font-fell italic"
-            style={{ color: "rgba(200,169,110,0.4)", padding: "0.25rem 0" }}
+            className="text-xs transition-colors duration-150"
+            style={{ color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer", padding: "2px 0" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--brand-subtle)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-muted)"; }}
           >
             + Add Goodreads URL (optional)
           </button>
         ) : (
           <input
             type="url"
-            className="nyx-input text-sm"
+            className="input text-sm"
             placeholder="https://www.goodreads.com/book/show/..."
             value={book.goodreads_url ?? ""}
-            onChange={(e) =>
-              onChange(index, { ...book, goodreads_url: e.target.value })
-            }
+            onChange={(e) => onChange(index, { ...book, goodreads_url: e.target.value })}
           />
         )}
       </div>

@@ -47,7 +47,6 @@ export default function CircleSwitcher() {
     setActiveId(id);
     setActiveCircleId(id);
     setOpen(false);
-    // Dispatch event so other components can react without a full page reload
     window.dispatchEvent(new CustomEvent("circle-changed", { detail: { circleId: id } }));
   }
 
@@ -58,59 +57,75 @@ export default function CircleSwitcher() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="font-fell italic text-sm flex items-center gap-1 transition-all"
-        style={{ color: "rgba(232,213,183,0.55)", cursor: "pointer", background: "none", border: "none", padding: 0 }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(232,213,183,0.85)"; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(232,213,183,0.55)"; }}
+        className="flex items-center gap-1.5 text-xs transition-colors duration-150"
+        style={{
+          color: "var(--text-tertiary)",
+          cursor: "pointer",
+          background: "none",
+          border: "none",
+          padding: "4px 8px",
+          borderRadius: 6,
+        }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)"; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; }}
       >
-        <span style={{ color: "rgba(200,169,110,0.5)", marginRight: 2 }}>◎</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.25"/>
+          <circle cx="6" cy="6" r="1.5" fill="currentColor" opacity="0.6"/>
+        </svg>
         {label}
-        <span style={{ fontSize: "0.6rem", color: "rgba(200,169,110,0.4)" }}>{open ? "▲" : "▼"}</span>
+        <svg
+          width="8" height="8" viewBox="0 0 8 8" fill="none"
+          className="transition-transform duration-150"
+          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+        >
+          <path d="M2 3l2 2 2-2" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
       </button>
 
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 6 }}
-            transition={{ duration: 0.15 }}
-            className="absolute right-0 mt-2 min-w-[180px] z-50"
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.12 }}
+            className="absolute right-0 mt-1.5 min-w-[160px] z-50 rounded-lg overflow-hidden"
             style={{
-              background: "#0D0A07",
-              border: "1px solid rgba(200,169,110,0.2)",
+              background: "var(--bg-raised)",
+              border: "1px solid rgba(99,135,255,0.12)",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
             }}
           >
-            {/* Personal (no circle) */}
             <button
               onClick={() => select(null)}
-              className="w-full text-left px-4 py-2 font-fell italic text-sm transition-all"
+              className="w-full text-left px-3 py-2 text-xs transition-colors duration-100"
               style={{
-                color: activeId === null ? "#C8A96E" : "rgba(232,213,183,0.6)",
-                background: activeId === null ? "rgba(200,169,110,0.05)" : "transparent",
+                color: activeId === null ? "var(--brand-subtle)" : "var(--text-secondary)",
+                background: activeId === null ? "rgba(99,135,255,0.07)" : "transparent",
                 border: "none",
                 cursor: "pointer",
               }}
-              onMouseEnter={(e) => { if (activeId !== null) (e.currentTarget as HTMLButtonElement).style.background = "rgba(200,169,110,0.03)"; }}
+              onMouseEnter={(e) => { if (activeId !== null) (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,135,255,0.04)"; }}
               onMouseLeave={(e) => { if (activeId !== null) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
             >
               Personal
             </button>
 
             {circles.length > 0 && (
-              <div style={{ borderTop: "1px solid rgba(200,169,110,0.1)" }}>
+              <div style={{ borderTop: "1px solid rgba(99,135,255,0.08)" }}>
                 {circles.map((c) => (
                   <button
                     key={c.id}
                     onClick={() => select(c.id)}
-                    className="w-full text-left px-4 py-2 font-fell italic text-sm transition-all"
+                    className="w-full text-left px-3 py-2 text-xs transition-colors duration-100"
                     style={{
-                      color: activeId === c.id ? "#C8A96E" : "rgba(232,213,183,0.6)",
-                      background: activeId === c.id ? "rgba(200,169,110,0.05)" : "transparent",
+                      color: activeId === c.id ? "var(--brand-subtle)" : "var(--text-secondary)",
+                      background: activeId === c.id ? "rgba(99,135,255,0.07)" : "transparent",
                       border: "none",
                       cursor: "pointer",
                     }}
-                    onMouseEnter={(e) => { if (activeId !== c.id) (e.currentTarget as HTMLButtonElement).style.background = "rgba(200,169,110,0.03)"; }}
+                    onMouseEnter={(e) => { if (activeId !== c.id) (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,135,255,0.04)"; }}
                     onMouseLeave={(e) => { if (activeId !== c.id) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
                   >
                     {c.name}
@@ -119,16 +134,15 @@ export default function CircleSwitcher() {
               </div>
             )}
 
-            {/* Manage link */}
-            <div style={{ borderTop: "1px solid rgba(200,169,110,0.1)" }}>
+            <div style={{ borderTop: "1px solid rgba(99,135,255,0.08)" }}>
               <a
                 href="/circles"
-                className="block px-4 py-2 font-cinzel text-xs tracking-widest uppercase"
-                style={{ color: "rgba(200,169,110,0.35)", textDecoration: "none" }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "rgba(200,169,110,0.65)"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "rgba(200,169,110,0.35)"; }}
+                className="block px-3 py-2 text-xs transition-colors duration-100"
+                style={{ color: "var(--text-muted)", textDecoration: "none" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-tertiary)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-muted)"; }}
               >
-                Manage Circles →
+                Manage circles →
               </a>
             </div>
           </motion.div>

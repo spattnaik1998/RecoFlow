@@ -6,7 +6,6 @@ import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import BookEntry from "@/components/BookEntry";
 import Nyx from "@/components/Nyx";
-import CandleFlicker from "@/components/CandleFlicker";
 import { NYX_DIALOGUE } from "@/lib/nyx-dialogue";
 import { SESSION_KEYS } from "@/types";
 import type { Book } from "@/types";
@@ -48,7 +47,6 @@ export default function EnterPage() {
     setError("");
 
     try {
-      // Create a reading session in Supabase
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -71,7 +69,6 @@ export default function EnterPage() {
         throw new Error("Could not create reading session");
       }
 
-      // Store to sessionStorage for handoff
       sessionStorage.setItem(SESSION_KEYS.BOOKS, JSON.stringify(validBooks));
       sessionStorage.setItem(SESSION_KEYS.SESSION_ID, session.id);
 
@@ -83,48 +80,65 @@ export default function EnterPage() {
   }
 
   return (
-    <div className="min-h-screen px-6 py-16">
+    <div className="min-h-screen pt-20 pb-16 px-6" style={{ background: "var(--bg-base)" }}>
       <div className="max-w-xl mx-auto">
-        {/* Candles */}
-        <div className="flex gap-10 justify-center mb-8">
-          <CandleFlicker size={28} />
-          <CandleFlicker size={34} />
-          <CandleFlicker size={28} />
+
+        {/* Step indicator */}
+        <div className="flex items-center gap-2 mb-10 justify-center">
+          {["Books", "Analyze", "Reflect", "Discover"].map((step, i) => (
+            <div key={step} className="flex items-center gap-2">
+              <div className={`step-dot ${i === 0 ? "step-dot-active" : ""}`} />
+              <span
+                className="text-xs"
+                style={{ color: i === 0 ? "var(--brand-subtle)" : "var(--text-muted)" }}
+              >
+                {step}
+              </span>
+              {i < 3 && (
+                <div
+                  className="w-8 h-px"
+                  style={{ background: "rgba(99,135,255,0.15)" }}
+                />
+              )}
+            </div>
+          ))}
         </div>
 
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-8"
+          transition={{ duration: 0.5 }}
+          className="mb-6"
         >
           <h1
-            className="font-cinzel text-3xl mb-4 leading-tight"
-            style={{ color: "#C8A96E" }}
+            className="font-display text-2xl mb-2"
+            style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}
           >
-            {NYX_DIALOGUE.enter_header}
+            What are you reading?
           </h1>
-          <div className="gold-divider-center mb-4">✦</div>
+          <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
+            Add up to {MAX_BOOKS} books you're currently reading.
+          </p>
         </motion.div>
 
-        {/* Nyx prompt */}
+        {/* Nyx message */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.8 }}
-          className="mb-8"
+          transition={{ delay: 0.2, duration: 0.5 }}
+          className="mb-6"
         >
-          <Nyx dialogue={NYX_DIALOGUE.enter_subtitle} showPortrait={true} />
+          <Nyx dialogue={NYX_DIALOGUE.enter_subtitle} />
         </motion.div>
 
         {/* Form */}
         <motion.form
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.7, duration: 0.8 }}
+          transition={{ delay: 0.35, duration: 0.5 }}
           onSubmit={handleSubmit}
-          className="space-y-4"
+          className="space-y-3"
         >
           {books.map((book, i) => (
             <BookEntry
@@ -137,32 +151,36 @@ export default function EnterPage() {
             />
           ))}
 
-          {/* Add book */}
           {books.length < MAX_BOOKS && (
             <button
               type="button"
               onClick={addBook}
               className="btn-ghost w-full"
             >
-              {NYX_DIALOGUE.enter_add_book}
+              + Add another book
             </button>
           )}
 
-          {/* Error */}
           {error && (
-            <p className="font-fell italic text-sm" style={{ color: "#C0392B" }}>
-              ✦ {error}
+            <p className="text-sm" style={{ color: "var(--danger)" }}>
+              {error}
             </p>
           )}
 
-          {/* Submit */}
-          <div className="pt-4">
+          <div className="pt-2">
             <button
               type="submit"
               className="btn-primary w-full"
               disabled={loading || validBooks.length === 0}
             >
-              {loading ? NYX_DIALOGUE.enter_analyzing : NYX_DIALOGUE.enter_submit}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="spinner" />
+                  Analyzing your reading list…
+                </span>
+              ) : (
+                "Analyze my reading list →"
+              )}
             </button>
           </div>
         </motion.form>

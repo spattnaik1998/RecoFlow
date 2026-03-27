@@ -3,43 +3,30 @@ import "./globals.css";
 import NavBar from "@/components/NavBar";
 
 export const metadata: Metadata = {
-  title: "RecoFlow — The Library of Nyx",
+  title: "RecoFlow — AI Reading Intelligence",
   description:
-    "Discover your next book at the thematic intersection of everything you are currently reading. Guided by Nyx, the AI librarian.",
-  keywords: ["book recommendations", "AI", "reading", "thematic intersection"],
+    "RecoFlow analyzes what your team is reading, finds the hidden connections between books, and recommends exactly what to read next.",
+  keywords: ["book recommendations", "AI", "reading", "team learning", "L&D"],
   openGraph: {
-    title: "RecoFlow — The Library of Nyx",
+    title: "RecoFlow — AI Reading Intelligence",
     description:
-      "An AI librarian who finds your next book at the intersection of all you are reading.",
+      "Smarter reading, for teams that think. AI-powered book recommendations that compound.",
     type: "website",
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=IM+Fell+English:ital@0;1&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-background antialiased">
-        {/* Film grain overlay */}
-        <div className="grain-overlay" aria-hidden="true" />
-        {/* Edge vignette */}
-        <div className="vignette" aria-hidden="true" />
-        {/* Persistent nav — renders only when authenticated, hidden on / and /auth */}
+      <body className="min-h-screen bg-base antialiased font-sans">
         <NavBar />
         {children}
       </body>

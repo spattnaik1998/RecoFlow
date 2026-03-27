@@ -10,10 +10,11 @@ import type { User } from "@supabase/supabase-js";
 const HIDDEN_ON = ["/", "/auth"];
 
 const NAV_LINKS = [
-  { href: "/enter",   label: "Consult" },
-  { href: "/library", label: "Library" },
-  { href: "/profile", label: "Profile" },
-  { href: "/circles", label: "Circles" },
+  { href: "/enter",       label: "New Session" },
+  { href: "/library",     label: "Library" },
+  { href: "/profile",     label: "Profile" },
+  { href: "/circles",     label: "Circles" },
+  { href: "/preferences", label: "Preferences" },
 ];
 
 export default function NavBar() {
@@ -26,8 +27,10 @@ export default function NavBar() {
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => setUser(session?.user ?? null)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) =>
+      setUser(session?.user ?? null)
     );
 
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -50,29 +53,44 @@ export default function NavBar() {
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{
         background: scrolled
-          ? "rgba(10, 8, 5, 0.97)"
-          : "linear-gradient(to bottom, rgba(13,10,7,0.92) 0%, rgba(13,10,7,0) 100%)",
-        borderBottom: scrolled ? "1px solid rgba(200,169,110,0.1)" : "1px solid transparent",
-        backdropFilter: scrolled ? "blur(12px)" : "none",
-        boxShadow: scrolled ? "0 4px 32px rgba(0,0,0,0.4)" : "none",
+          ? "rgba(10,14,26,0.95)"
+          : "rgba(10,14,26,0.7)",
+        borderBottom: scrolled
+          ? "1px solid rgba(99,135,255,0.12)"
+          : "1px solid transparent",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
       }}
     >
-      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
 
         {/* Brand */}
         <Link
           href="/enter"
-          className="font-cinzel tracking-widest uppercase transition-opacity duration-200 hover:opacity-80"
-          style={{ color: "var(--gold)", fontSize: "0.8rem", letterSpacing: "0.3em" }}
+          className="flex items-center gap-2 group"
         >
-          RecoFlow
+          <div
+            className="w-7 h-7 rounded-md flex items-center justify-center transition-all duration-200 group-hover:scale-105"
+            style={{ background: "var(--brand)", boxShadow: "0 0 12px rgba(99,135,255,0.35)" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M2 11L7 3L12 11" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M4 8.5H10" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <span
+            className="font-semibold tracking-tight transition-colors duration-200"
+            style={{ fontSize: "0.938rem", color: "var(--text-primary)" }}
+          >
+            RecoFlow
+          </span>
         </Link>
 
         {/* Centre nav links */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-1">
           {NAV_LINKS.map(({ href, label }) => {
             const active = pathname.startsWith(href);
             return (
@@ -80,63 +98,43 @@ export default function NavBar() {
                 key={href}
                 href={href}
                 className="nav-link"
-                style={{
-                  color: active ? "var(--parchment-mid)" : undefined,
-                  fontStyle: "italic",
-                }}
+                data-active={active}
               >
                 {label}
-                {active && (
-                  <span
-                    style={{
-                      position: "absolute",
-                      bottom: -2,
-                      left: 0,
-                      width: "100%",
-                      height: 1,
-                      background: "var(--gold-dim)",
-                    }}
-                  />
-                )}
               </Link>
             );
           })}
         </div>
 
-        {/* Right: Circle switcher + sign out */}
-        <div className="flex items-center gap-6">
+        {/* Right side */}
+        <div className="flex items-center gap-3">
           <CircleSwitcher />
 
-          <div
-            style={{
-              width: 1,
-              height: 14,
-              background: "rgba(200,169,110,0.15)",
-            }}
-          />
+          <div style={{ width: 1, height: 16, background: "rgba(99,135,255,0.12)" }} />
 
           <button
             onClick={handleSignOut}
             disabled={signingOut}
-            className="font-cinzel uppercase tracking-widest transition-all duration-200"
+            className="text-sm transition-colors duration-150 disabled:opacity-50"
             style={{
-              fontSize: "0.62rem",
-              letterSpacing: "0.2em",
-              color: signingOut ? "var(--parchment-dim)" : "rgba(200,169,110,0.45)",
+              color: "var(--text-tertiary)",
               background: "none",
               border: "none",
               cursor: signingOut ? "not-allowed" : "pointer",
-              padding: 0,
+              padding: "4px 8px",
+              borderRadius: 6,
             }}
             onMouseEnter={(e) => {
               if (!signingOut)
-                (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.85)";
+                (e.currentTarget as HTMLButtonElement).style.color =
+                  "var(--text-secondary)";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.45)";
+              (e.currentTarget as HTMLButtonElement).style.color =
+                "var(--text-tertiary)";
             }}
           >
-            {signingOut ? "Leaving…" : "Sign Out"}
+            {signingOut ? "Signing out…" : "Sign out"}
           </button>
         </div>
       </div>

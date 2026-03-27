@@ -44,144 +44,105 @@ export default function CirclesDashboard() {
 
   if (loading) {
     return (
-      <div className="loading-screen">
-        <div className="loading-dots"><span /><span /><span /></div>
-        <p className="loading-screen-label">Retrieving your circles</p>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg-base)" }}>
+        <div className="spinner" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen px-6 pt-28 pb-20">
+    <div className="min-h-screen pt-20 pb-20 px-6" style={{ background: "var(--bg-base)" }}>
       <div className="max-w-2xl mx-auto">
 
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-12"
+          transition={{ duration: 0.5 }}
+          className="flex items-center justify-between mb-8"
         >
-          <p className="label-overline mb-3" style={{ color: "rgba(200,169,110,0.35)" }}>
-            Collaborative Reading
-          </p>
-          <h1
-            className="font-cinzel mb-4"
-            style={{ fontSize: "1.5rem", color: "var(--gold)", letterSpacing: "0.04em" }}
-          >
-            Reading Circles
-          </h1>
-          <div className="gold-divider-center mb-5">✦</div>
-          <p
-            className="font-fell italic"
-            style={{ fontSize: "0.92rem", color: "rgba(232,213,183,0.42)" }}
-          >
-            Shared spaces where consultations and recommendations converge.
-          </p>
+          <div>
+            <h1
+              className="font-display text-2xl mb-1"
+              style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}
+            >
+              Reading circles
+            </h1>
+            <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
+              Shared spaces for collaborative reading.
+            </p>
+          </div>
+          <button onClick={() => setShowCreate(true)} className="btn-primary">
+            New circle
+          </button>
         </motion.div>
 
-        {/* Create circle CTA */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="mb-8"
-        >
-          <AnimatePresence mode="wait">
-            {!showCreate ? (
-              <motion.div
-                key="btn"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center"
-              >
-                <button onClick={() => setShowCreate(true)} className="btn-ghost">
-                  Form a New Circle
+        {/* Create form */}
+        <AnimatePresence>
+          {showCreate && (
+            <motion.div
+              key="create-form"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="card p-5 mb-6"
+            >
+              <p className="text-sm font-medium mb-3" style={{ color: "var(--text-primary)" }}>
+                Create a circle
+              </p>
+              <form onSubmit={handleCreate} className="flex gap-2">
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Circle name"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className="input flex-1"
+                />
+                <button
+                  type="submit"
+                  disabled={creating || !newName.trim()}
+                  className="btn-primary"
+                  style={{ opacity: creating || !newName.trim() ? 0.5 : 1 }}
+                >
+                  {creating ? "Creating…" : "Create"}
                 </button>
-              </motion.div>
-            ) : (
-              <motion.form
-                key="form"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                onSubmit={handleCreate}
-                className="victorian-border p-5"
-              >
-                <p className="label-overline mb-4">Name Your Circle</p>
-                <div className="flex gap-3">
-                  <input
-                    autoFocus
-                    type="text"
-                    placeholder="e.g. The Midnight Readers"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    className="nyx-input flex-1"
-                    style={{ fontSize: "0.92rem" }}
-                  />
-                  <button
-                    type="submit"
-                    disabled={creating || !newName.trim()}
-                    className="btn-ghost"
-                    style={{
-                      padding: "0 1.5rem",
-                      opacity: creating || !newName.trim() ? 0.45 : 1,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {creating ? "…" : "Create"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setShowCreate(false); setNewName(""); }}
-                    className="font-fell italic text-sm"
-                    style={{
-                      color: "rgba(200,169,110,0.35)",
-                      cursor: "pointer",
-                      background: "none",
-                      border: "none",
-                      flexShrink: 0,
-                      padding: "0 0.5rem",
-                    }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.65)"; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.35)"; }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </motion.form>
-            )}
-          </AnimatePresence>
-        </motion.div>
+                <button
+                  type="button"
+                  onClick={() => { setShowCreate(false); setNewName(""); }}
+                  className="btn-ghost"
+                >
+                  Cancel
+                </button>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Empty state */}
         {circles.length === 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.2 }}
             className="text-center py-20"
           >
             <div
-              className="font-cinzel mx-auto mb-6 flex items-center justify-center"
-              style={{
-                width: 64,
-                height: 64,
-                border: "1px solid rgba(200,169,110,0.15)",
-                color: "rgba(200,169,110,0.2)",
-                fontSize: "1.5rem",
-                letterSpacing: "0.1em",
-              }}
+              className="w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center"
+              style={{ background: "rgba(99,135,255,0.08)", border: "1px solid rgba(99,135,255,0.12)" }}
             >
-              ◎
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="6" stroke="var(--brand-subtle)" strokeWidth="1.5"/>
+                <path d="M10 7v6M7 10h6" stroke="var(--brand-subtle)" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
             </div>
-            <p
-              className="font-fell italic leading-relaxed"
-              style={{ color: "rgba(232,213,183,0.38)", fontSize: "0.95rem" }}
-            >
-              No circles formed yet.<br />Invite fellow readers to share in the oracle&rsquo;s counsel.
+            <p className="text-sm mb-6" style={{ color: "var(--text-tertiary)" }}>
+              No circles yet. Create one and invite your team.
             </p>
+            <button onClick={() => setShowCreate(true)} className="btn-primary">
+              Create your first circle
+            </button>
           </motion.div>
         )}
 
@@ -190,52 +151,47 @@ export default function CirclesDashboard() {
           {circles.map((circle, i) => (
             <motion.div
               key={circle.id}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.06 * i, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ delay: 0.05 * i, duration: 0.4 }}
             >
               <Link
                 href={`/circles/${circle.id}`}
-                className="block victorian-border p-5 group"
-                style={{ textDecoration: "none" }}
+                className="card p-4 flex items-center justify-between group transition-all duration-150 hover:border-brand/30"
+                style={{ display: "flex", textDecoration: "none" }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <h2
-                      className="font-cinzel mb-1.5 transition-colors duration-200"
+                <div className="flex-1 min-w-0">
+                  <h2
+                    className="text-sm font-semibold mb-0.5 transition-colors duration-150"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    {circle.name}
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                      {circle.member_count} {circle.member_count === 1 ? "member" : "members"}
+                    </span>
+                    <span
+                      className="text-xs px-1.5 py-0.5 rounded"
                       style={{
-                        fontSize: "0.92rem",
-                        color: "var(--parchment)",
-                        letterSpacing: "0.03em",
+                        background: circle.my_role === "owner"
+                          ? "rgba(99,135,255,0.12)"
+                          : "rgba(99,135,255,0.06)",
+                        color: "var(--brand-subtle)",
+                        border: "1px solid rgba(99,135,255,0.15)",
                       }}
                     >
-                      {circle.name}
-                    </h2>
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="font-fell italic"
-                        style={{ fontSize: "0.8rem", color: "rgba(200,169,110,0.4)" }}
-                      >
-                        {circle.member_count} {circle.member_count === 1 ? "member" : "members"}
-                      </span>
-                      <span
-                        className={`role-badge ${circle.my_role === "owner" ? "role-badge-owner" : ""}`}
-                      >
-                        {circle.my_role}
-                      </span>
-                    </div>
+                      {circle.my_role}
+                    </span>
                   </div>
-                  <span
-                    className="font-fell ml-4 flex-shrink-0 transition-all duration-200"
-                    style={{
-                      color: "rgba(200,169,110,0.25)",
-                      fontSize: "0.9rem",
-                      transform: "translateX(0)",
-                    }}
-                  >
-                    →
-                  </span>
                 </div>
+                <svg
+                  width="14" height="14" viewBox="0 0 14 14" fill="none"
+                  className="flex-shrink-0 ml-3 transition-transform duration-150 group-hover:translate-x-0.5"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  <path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </Link>
             </motion.div>
           ))}

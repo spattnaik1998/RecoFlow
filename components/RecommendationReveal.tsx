@@ -23,7 +23,6 @@ export default function RecommendationReveal({
   useEffect(() => {
     if (recommendations.length === 0) return;
 
-    // Reveal first card immediately, then stagger the rest
     setRevealedCount(1);
 
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -40,23 +39,19 @@ export default function RecommendationReveal({
   if (recommendations.length === 0) return null;
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div>
       {/* Nyx intro */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="mb-10"
+        transition={{ duration: 0.5 }}
+        className="mb-8"
       >
-        <Nyx
-          dialogue={nyxRevealIntro(recommendations.length)}
-          showPortrait={true}
-          typewriterSpeed={20}
-        />
+        <Nyx dialogue={nyxRevealIntro(recommendations.length)} />
       </motion.div>
 
       {/* Cards */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         {recommendations.map((rec, i) => (
           <BookCard
             key={`${rec.title}-${i}`}
@@ -73,15 +68,17 @@ export default function RecommendationReveal({
         ))}
       </div>
 
-      {/* Footer when all revealed */}
       {revealedCount >= recommendations.length && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-          className="mt-12 text-center"
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="mt-8 pt-6 text-center"
+          style={{ borderTop: "1px solid rgba(99,135,255,0.08)" }}
         >
-          <div className="gold-divider-center">✦ The Oracle Has Spoken ✦</div>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            All {recommendations.length} recommendations ready
+          </p>
         </motion.div>
       )}
     </div>

@@ -19,21 +19,12 @@ interface BookCardProps {
   circleContext?: { circleId: string };
 }
 
-const RANK_NUMERALS = ["I", "II", "III", "IV", "V"];
-const RANK_LABELS = [
-  "The Oracle's Choice",
-  "Second Sight",
-  "The Hidden Path",
-  "The Fourth Mirror",
-  "The Final Augury",
-];
-
 const DISLIKE_REASONS: { value: DislikeReason; label: string }[] = [
-  { value: "too_academic",   label: "Too academic"  },
-  { value: "too_commercial", label: "Too commercial" },
-  { value: "already_read",   label: "Already read"  },
-  { value: "wrong_tone",     label: "Wrong tone"    },
-  { value: "not_relevant",   label: "Not relevant"  },
+  { value: "too_academic",   label: "Too academic"   },
+  { value: "too_commercial", label: "Too commercial"  },
+  { value: "already_read",   label: "Already read"   },
+  { value: "wrong_tone",     label: "Wrong tone"     },
+  { value: "not_relevant",   label: "Not relevant"   },
 ];
 
 export default function BookCard({
@@ -48,8 +39,6 @@ export default function BookCard({
   const [showReasons, setShowReasons] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
-
-  const isPrime = rank === 1;
 
   async function submitFeedback(v: FeedbackVote, reason?: DislikeReason) {
     if (!feedbackState?.recommendationId || submitting || confirmed) return;
@@ -69,71 +58,59 @@ export default function BookCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 28, scale: 0.97 }}
-      animate={revealed ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 28, scale: 0.97 }}
-      transition={{ duration: 0.9, delay, ease: [0.16, 1, 0.3, 1] }}
-      className={`book-card p-7 relative overflow-hidden ${isPrime ? "book-card-prime" : ""}`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+      transition={{ duration: 0.5, delay, ease: [0.16, 1, 0.3, 1] }}
+      className="rec-card"
     >
-      {/* Rank header row */}
-      <div className="flex items-start justify-between mb-5">
+      {/* Top accent line */}
+      <div className="rec-card-top" />
+
+      {/* Rank + badge row */}
+      <div className="flex items-center justify-between mb-3">
         <span
-          className="label-overline"
-          style={{ color: isPrime ? "var(--gold-dim)" : "rgba(200,169,110,0.3)" }}
-        >
-          {RANK_LABELS[rank - 1] ?? `Recommendation ${rank}`}
-        </span>
-        <span
-          className="font-cinzel font-bold"
+          className="text-xs font-medium px-2 py-0.5 rounded"
           style={{
-            fontSize: "1.5rem",
-            lineHeight: 1,
-            color: isPrime ? "rgba(200,169,110,0.5)" : "rgba(200,169,110,0.15)",
+            background: rank === 1 ? "rgba(99,135,255,0.15)" : "rgba(99,135,255,0.07)",
+            color: rank === 1 ? "var(--brand-subtle)" : "var(--text-muted)",
+            border: rank === 1 ? "1px solid rgba(99,135,255,0.25)" : "1px solid rgba(99,135,255,0.1)",
           }}
         >
-          {RANK_NUMERALS[rank - 1] ?? rank}
+          {rank === 1 ? "Top pick" : `#${rank}`}
         </span>
+        {recommendation.why_now && (
+          <span
+            className="text-xs"
+            style={{ color: "var(--text-muted)", fontSize: "0.7rem" }}
+          >
+            Why now
+          </span>
+        )}
       </div>
-
-      {/* Divider */}
-      <div className="gold-divider" style={{ marginTop: 0 }} />
 
       {/* Title & author */}
       <h3
-        className="font-cinzel leading-snug mb-1"
-        style={{
-          fontSize: "0.98rem",
-          color: isPrime ? "var(--parchment)" : "rgba(232,213,183,0.88)",
-          letterSpacing: "0.03em",
-        }}
+        className="font-semibold leading-snug mb-1"
+        style={{ fontSize: "1rem", color: "var(--text-primary)" }}
       >
         {recommendation.title}
       </h3>
-      <p
-        className="font-fell italic mb-5"
-        style={{ fontSize: "0.92rem", color: "var(--gold-dim)" }}
-      >
+      <p className="text-sm mb-4" style={{ color: "var(--text-tertiary)" }}>
         {recommendation.author}
       </p>
 
       {/* Thematic connection */}
-      <p
-        className="font-fell leading-relaxed mb-4"
-        style={{ fontSize: "0.92rem", color: "rgba(232,213,183,0.68)" }}
-      >
+      <p className="text-sm leading-relaxed mb-3" style={{ color: "var(--text-secondary)" }}>
         {recommendation.thematic_connection}
       </p>
 
       {/* Why now */}
       {recommendation.why_now && (
         <div
-          className="pt-4 mt-1"
-          style={{ borderTop: "1px solid rgba(200,169,110,0.08)" }}
+          className="pt-3 mt-1"
+          style={{ borderTop: "1px solid rgba(99,135,255,0.08)" }}
         >
-          <p
-            className="font-fell italic"
-            style={{ fontSize: "0.82rem", color: "rgba(200,169,110,0.5)", lineHeight: 1.7 }}
-          >
-            <span style={{ opacity: 0.7 }}>✦ </span>
+          <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
             {recommendation.why_now}
           </p>
         </div>
@@ -141,17 +118,17 @@ export default function BookCard({
 
       {/* Feedback controls */}
       {feedbackState && (
-        <div className="mt-4 pt-3" style={{ borderTop: "1px solid rgba(200,169,110,0.07)" }}>
+        <div className="mt-4 pt-3" style={{ borderTop: "1px solid rgba(99,135,255,0.08)" }}>
           <AnimatePresence mode="wait">
             {confirmed ? (
               <motion.p
                 key="confirmed"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="font-fell italic"
-                style={{ fontSize: "0.78rem", color: "rgba(200,169,110,0.45)" }}
+                className="text-xs"
+                style={{ color: "var(--text-muted)" }}
               >
-                {vote === "like" ? "The oracle notes your approval." : "Your counsel has been recorded."}
+                {vote === "like" ? "Marked as relevant" : "Feedback recorded"}
               </motion.p>
             ) : showReasons ? (
               <motion.div
@@ -160,31 +137,29 @@ export default function BookCard({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
               >
-                <p className="label-overline mb-3" style={{ color: "rgba(200,169,110,0.4)" }}>
-                  Why not this one?
+                <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>
+                  Why not?
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {DISLIKE_REASONS.map(({ value, label }) => (
                     <button
                       key={value}
                       onClick={() => submitFeedback("dislike", value)}
                       disabled={submitting}
-                      className="font-fell italic transition-all duration-200"
+                      className="text-xs px-2.5 py-1 rounded transition-all duration-150"
                       style={{
-                        fontSize: "0.78rem",
-                        padding: "0.25rem 0.75rem",
-                        border: "1px solid rgba(200,169,110,0.18)",
-                        color: "rgba(232,213,183,0.55)",
+                        border: "1px solid rgba(99,135,255,0.15)",
+                        color: "var(--text-secondary)",
                         background: "transparent",
                         cursor: submitting ? "not-allowed" : "pointer",
                       }}
                       onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(200,169,110,0.45)";
-                        (e.currentTarget as HTMLButtonElement).style.color = "rgba(232,213,183,0.85)";
+                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(99,135,255,0.08)";
+                        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,135,255,0.3)";
                       }}
                       onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(200,169,110,0.18)";
-                        (e.currentTarget as HTMLButtonElement).style.color = "rgba(232,213,183,0.55)";
+                        (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,135,255,0.15)";
                       }}
                     >
                       {label}
@@ -192,15 +167,8 @@ export default function BookCard({
                   ))}
                   <button
                     onClick={() => { setShowReasons(false); setVote(null); }}
-                    className="font-fell italic"
-                    style={{
-                      fontSize: "0.78rem",
-                      padding: "0.25rem 0.75rem",
-                      color: "rgba(200,169,110,0.3)",
-                      cursor: "pointer",
-                      background: "none",
-                      border: "none",
-                    }}
+                    className="text-xs px-2 py-1"
+                    style={{ color: "var(--text-muted)", cursor: "pointer", background: "none", border: "none" }}
                   >
                     Cancel
                   </button>
@@ -211,59 +179,56 @@ export default function BookCard({
                 key="thumbs"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex items-center gap-4"
+                className="flex items-center gap-2"
               >
-                <span
-                  className="label-overline"
-                  style={{ color: "rgba(200,169,110,0.28)", fontSize: "0.58rem" }}
-                >
-                  Resonance
+                <span className="text-xs mr-1" style={{ color: "var(--text-muted)" }}>
+                  Relevant?
                 </span>
                 <button
                   onClick={() => submitFeedback("like")}
-                  title="This resonates"
+                  title="Yes, relevant"
+                  className="text-xs px-2.5 py-1 rounded transition-all duration-150"
                   style={{
-                    fontSize: "0.9rem",
-                    color: "rgba(200,169,110,0.35)",
+                    border: "1px solid rgba(99,135,255,0.15)",
+                    color: "var(--text-secondary)",
+                    background: "transparent",
                     cursor: "pointer",
-                    background: "none",
-                    border: "none",
-                    padding: 0,
-                    transition: "color 0.15s, transform 0.15s",
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.9)";
-                    (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.15)";
+                    (e.currentTarget as HTMLButtonElement).style.background = "rgba(52,211,153,0.08)";
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(52,211,153,0.3)";
+                    (e.currentTarget as HTMLButtonElement).style.color = "#34D399";
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.35)";
-                    (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+                    (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,135,255,0.15)";
+                    (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
                   }}
                 >
-                  ✦
+                  Yes
                 </button>
                 <button
                   onClick={() => { setVote("dislike"); setShowReasons(true); }}
                   title="Not for me"
+                  className="text-xs px-2.5 py-1 rounded transition-all duration-150"
                   style={{
-                    fontSize: "0.9rem",
-                    color: "rgba(200,169,110,0.35)",
+                    border: "1px solid rgba(99,135,255,0.15)",
+                    color: "var(--text-secondary)",
+                    background: "transparent",
                     cursor: "pointer",
-                    background: "none",
-                    border: "none",
-                    padding: 0,
-                    transition: "color 0.15s, transform 0.15s",
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.9)";
-                    (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.15)";
+                    (e.currentTarget as HTMLButtonElement).style.background = "rgba(248,113,113,0.08)";
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(248,113,113,0.3)";
+                    (e.currentTarget as HTMLButtonElement).style.color = "#F87171";
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.35)";
-                    (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+                    (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(99,135,255,0.15)";
+                    (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
                   }}
                 >
-                  ✕
+                  No
                 </button>
               </motion.div>
             )}
@@ -273,22 +238,12 @@ export default function BookCard({
 
       {/* Circle vote controls */}
       {circleContext && recommendation.id && (
-        <div className="mt-2">
+        <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(99,135,255,0.08)" }}>
           <VoteControls
             recommendationId={recommendation.id}
             circleId={circleContext.circleId}
           />
         </div>
-      )}
-
-      {/* Prime card ambient glow */}
-      {isPrime && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: "radial-gradient(ellipse at top right, rgba(200,169,110,0.05) 0%, transparent 60%)",
-          }}
-        />
       )}
     </motion.div>
   );

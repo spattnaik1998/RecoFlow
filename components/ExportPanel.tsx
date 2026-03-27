@@ -10,10 +10,10 @@ interface ExportPanelProps {
 }
 
 const STATUS_COPY: Record<string, string> = {
-  queued: "The presses are warming...",
-  generating: "Rendering the chronicle...",
-  ready: "Your chronicle is prepared.",
-  failed: "The chronicle could not be rendered.",
+  queued:     "Queuing export…",
+  generating: "Rendering your digest…",
+  ready:      "Export ready.",
+  failed:     "Export failed.",
 };
 
 export default function ExportPanel({ sessionId, existingExport }: ExportPanelProps) {
@@ -24,7 +24,6 @@ export default function ExportPanel({ sessionId, existingExport }: ExportPanelPr
   const [open, setOpen] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Poll for status updates while queued or generating
   useEffect(() => {
     if (!exp || exp.status === "ready" || exp.status === "failed") {
       if (pollRef.current) clearInterval(pollRef.current);
@@ -73,9 +72,7 @@ export default function ExportPanel({ sessionId, existingExport }: ExportPanelPr
       await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback: select the text
-    }
+    } catch {/* fallback */}
   }
 
   const shareUrl = exp?.share_id
@@ -83,25 +80,26 @@ export default function ExportPanel({ sessionId, existingExport }: ExportPanelPr
     : null;
 
   return (
-    <div className="mt-6 pt-5 border-t border-gold/10">
+    <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(99,135,255,0.08)" }}>
       {/* Toggle header */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 w-full text-left"
+        className="flex items-center gap-1.5 transition-colors duration-150"
         style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
       >
-        <span
-          className="font-cinzel text-xs tracking-widest uppercase"
-          style={{ color: "rgba(200,169,110,0.5)" }}
-        >
-          Export Chronicle
+        <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+          Export & share
         </span>
-        <span
-          className="font-fell italic text-xs"
-          style={{ color: "rgba(200,169,110,0.3)" }}
+        <svg
+          width="10" height="10" viewBox="0 0 10 10" fill="none"
+          className="transition-transform duration-200"
+          style={{
+            color: "var(--text-muted)",
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+          }}
         >
-          {open ? "▲" : "▼"}
-        </span>
+          <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
       </button>
 
       <AnimatePresence>
@@ -110,24 +108,23 @@ export default function ExportPanel({ sessionId, existingExport }: ExportPanelPr
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="mt-4"
+            transition={{ duration: 0.2 }}
+            className="mt-3 overflow-hidden"
           >
             {/* No export yet */}
             {!exp && (
               <div>
-                {/* Style selector */}
-                <div className="flex gap-3 mb-4">
+                <div className="flex gap-2 mb-3">
                   {(["branded", "minimal"] as ExportStyle[]).map((s) => (
                     <button
                       key={s}
                       onClick={() => setStyle(s)}
-                      className="font-fell italic text-sm px-4 py-2 transition-all duration-200"
+                      className="text-xs px-3 py-1.5 rounded transition-all duration-150 capitalize"
                       style={{
-                        border: `1px solid ${style === s ? "rgba(200,169,110,0.7)" : "rgba(200,169,110,0.25)"}`,
-                        color: style === s ? "rgba(200,169,110,1)" : "rgba(200,169,110,0.5)",
-                        background: style === s ? "rgba(200,169,110,0.06)" : "transparent",
+                        border: `1px solid ${style === s ? "rgba(99,135,255,0.4)" : "rgba(99,135,255,0.12)"}`,
+                        color: style === s ? "var(--brand-subtle)" : "var(--text-muted)",
+                        background: style === s ? "rgba(99,135,255,0.08)" : "transparent",
                         cursor: "pointer",
-                        textTransform: "capitalize",
                       }}
                     >
                       {s}
@@ -137,107 +134,57 @@ export default function ExportPanel({ sessionId, existingExport }: ExportPanelPr
                 <button
                   onClick={handleCreate}
                   disabled={creating}
-                  className="font-cinzel text-xs tracking-widest uppercase px-5 py-3 transition-all duration-200"
-                  style={{
-                    border: "1px solid rgba(200,169,110,0.4)",
-                    color: "rgba(200,169,110,0.8)",
-                    background: "transparent",
-                    cursor: creating ? "not-allowed" : "pointer",
-                    opacity: creating ? 0.5 : 1,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!creating) {
-                      (e.currentTarget as HTMLButtonElement).style.background = "rgba(200,169,110,0.08)";
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(200,169,110,0.7)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(200,169,110,0.4)";
-                  }}
+                  className="btn-secondary text-xs"
+                  style={{ opacity: creating ? 0.5 : 1 }}
                 >
-                  {creating ? "Preparing..." : "Generate Chronicle"}
+                  {creating ? "Generating…" : "Generate export"}
                 </button>
               </div>
             )}
 
-            {/* Export exists — show status */}
+            {/* Export exists */}
             {exp && (
               <div>
                 <p
-                  className="font-fell italic text-sm mb-4"
+                  className="text-xs mb-3"
                   style={{
-                    color:
-                      exp.status === "ready"
-                        ? "rgba(200,169,110,0.8)"
-                        : exp.status === "failed"
-                        ? "rgba(200,100,100,0.7)"
-                        : "rgba(232,213,183,0.5)",
+                    color: exp.status === "ready"
+                      ? "var(--success)"
+                      : exp.status === "failed"
+                      ? "var(--danger)"
+                      : "var(--text-tertiary)",
                   }}
                 >
                   {STATUS_COPY[exp.status] ?? exp.status}
                 </p>
 
                 {exp.status === "ready" && (
-                  <div className="flex flex-wrap gap-3">
-                    {/* Download */}
+                  <div className="flex flex-wrap gap-2">
                     <a
                       href={`/api/exports/${exp.id}/download`}
-                      download="recoflow-consultation.html"
-                      className="font-cinzel text-xs tracking-widest uppercase px-4 py-2 transition-all duration-200"
-                      style={{
-                        border: "1px solid rgba(200,169,110,0.4)",
-                        color: "rgba(200,169,110,0.8)",
-                        textDecoration: "none",
-                        display: "inline-block",
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.background = "rgba(200,169,110,0.08)";
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.background = "transparent";
-                      }}
+                      download="recoflow.html"
+                      className="btn-secondary text-xs"
+                      style={{ textDecoration: "none", display: "inline-flex" }}
                     >
                       Download
                     </a>
 
-                    {/* Copy share link */}
                     {shareUrl && (
                       <button
                         onClick={handleCopyLink}
-                        className="font-cinzel text-xs tracking-widest uppercase px-4 py-2 transition-all duration-200"
-                        style={{
-                          border: "1px solid rgba(200,169,110,0.4)",
-                          color: copied ? "rgba(200,169,110,1)" : "rgba(200,169,110,0.8)",
-                          background: copied ? "rgba(200,169,110,0.08)" : "transparent",
-                          cursor: "pointer",
-                        }}
+                        className="btn-secondary text-xs"
                       >
-                        {copied ? "Link Copied ✦" : "Copy Share Link"}
+                        {copied ? "Copied!" : "Copy link"}
                       </button>
                     )}
 
-                    {/* View in new tab */}
                     {exp.share_id && (
                       <a
                         href={`/s/${exp.share_id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-cinzel text-xs tracking-widest uppercase px-4 py-2 transition-all duration-200"
-                        style={{
-                          border: "1px solid rgba(200,169,110,0.25)",
-                          color: "rgba(200,169,110,0.5)",
-                          textDecoration: "none",
-                          display: "inline-block",
-                        }}
-                        onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(200,169,110,0.5)";
-                          (e.currentTarget as HTMLAnchorElement).style.color = "rgba(200,169,110,0.8)";
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(200,169,110,0.25)";
-                          (e.currentTarget as HTMLAnchorElement).style.color = "rgba(200,169,110,0.5)";
-                        }}
+                        className="btn-ghost text-xs"
+                        style={{ textDecoration: "none", display: "inline-flex" }}
                       >
                         View
                       </a>
@@ -248,8 +195,8 @@ export default function ExportPanel({ sessionId, existingExport }: ExportPanelPr
                 {exp.status === "failed" && (
                   <button
                     onClick={() => setExp(null)}
-                    className="font-fell italic text-xs"
-                    style={{ color: "rgba(200,169,110,0.4)", cursor: "pointer", background: "none", border: "none" }}
+                    className="text-xs"
+                    style={{ color: "var(--text-muted)", cursor: "pointer", background: "none", border: "none" }}
                   >
                     Try again
                   </button>

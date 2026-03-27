@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import CandleFlicker from "@/components/CandleFlicker";
 import type { UserPreferences } from "@/types";
 
 type PreferenceKey = "blocked_authors" | "blocked_titles" | "blocked_themes" | "preferred_themes";
@@ -10,23 +9,23 @@ type PreferenceKey = "blocked_authors" | "blocked_titles" | "blocked_themes" | "
 const SECTIONS: { key: PreferenceKey; label: string; description: string }[] = [
   {
     key: "blocked_authors",
-    label: "Blocked Authors",
-    description: "Nyx will not recommend books by these authors.",
+    label: "Blocked authors",
+    description: "Recommendations by these authors will never appear.",
   },
   {
     key: "blocked_titles",
-    label: "Blocked Titles",
-    description: "These specific titles will never appear in your recommendations.",
+    label: "Blocked titles",
+    description: "These specific titles are excluded from recommendations.",
   },
   {
     key: "blocked_themes",
-    label: "Avoided Themes",
-    description: "Themes to steer away from in future recommendations.",
+    label: "Avoided themes",
+    description: "Themes to steer away from in future sessions.",
   },
   {
     key: "preferred_themes",
-    label: "Preferred Themes",
-    description: "Themes Nyx will weight toward when strong candidates exist.",
+    label: "Preferred themes",
+    description: "Themes that will be weighted higher when strong candidates exist.",
   },
 ];
 
@@ -75,81 +74,64 @@ export default function PreferencesClient() {
         const data: UserPreferences = await res.json();
         setPrefs(data);
       }
-    } catch {
-      /* silent */
-    } finally {
+    } catch {/* silent */}
+    finally {
       setSaving(null);
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="loading-dots"><span /><span /><span /></div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg-base)" }}>
+        <div className="spinner" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen px-6 py-16">
+    <div className="min-h-screen pt-20 pb-16 px-6" style={{ background: "var(--bg-base)" }}>
       <div className="max-w-2xl mx-auto">
-        {/* Candles */}
-        <div className="flex gap-10 justify-center mb-10">
-          <CandleFlicker size={28} />
-          <CandleFlicker size={36} />
-          <CandleFlicker size={28} />
-        </div>
 
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-12"
+          transition={{ duration: 0.5 }}
+          className="mb-10"
         >
           <h1
-            className="font-cinzel text-3xl mb-3"
-            style={{ color: "#C8A96E" }}
+            className="font-display text-2xl mb-1"
+            style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}
           >
-            Reading Preferences
+            Preferences
           </h1>
-          <div className="gold-divider-center mb-4">✦</div>
-          <p
-            className="font-fell italic text-sm"
-            style={{ color: "rgba(232,213,183,0.6)" }}
-          >
-            Shape the boundaries of Nyx&rsquo;s counsel. What to avoid, what to seek.
+          <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
+            Control what appears — and what doesn't — in your recommendations.
           </p>
         </motion.div>
 
         {/* Sections */}
-        <div className="space-y-10">
+        <div className="space-y-8">
           {SECTIONS.map(({ key, label, description }, sectionIdx) => (
             <motion.div
               key={key}
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 * sectionIdx }}
+              transition={{ duration: 0.4, delay: 0.08 * sectionIdx }}
+              className="card p-5"
             >
-              <div className="mb-3">
-                <h2
-                  className="font-cinzel text-sm tracking-widest uppercase mb-1"
-                  style={{ color: "#C8A96E" }}
-                >
-                  {label}
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                    {label}
+                  </h2>
                   {saving === key && (
-                    <span
-                      className="ml-2 font-fell italic normal-case tracking-normal text-xs"
-                      style={{ color: "rgba(200,169,110,0.5)" }}
-                    >
+                    <span className="text-xs" style={{ color: "var(--text-muted)" }}>
                       saving…
                     </span>
                   )}
-                </h2>
-                <p
-                  className="font-fell italic text-xs"
-                  style={{ color: "rgba(232,213,183,0.45)" }}
-                >
+                </div>
+                <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
                   {description}
                 </p>
               </div>
@@ -157,30 +139,25 @@ export default function PreferencesClient() {
               {/* Chips */}
               <div className="flex flex-wrap gap-2 mb-3 min-h-[28px]">
                 {(prefs?.[key] ?? []).length === 0 ? (
-                  <span
-                    className="font-fell italic text-xs"
-                    style={{ color: "rgba(232,213,183,0.3)" }}
-                  >
-                    None set
-                  </span>
+                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>None set</span>
                 ) : (
                   (prefs?.[key] ?? []).map((item) => (
                     <span
                       key={item}
-                      className="flex items-center gap-1 px-3 py-1 text-xs font-fell"
+                      className="flex items-center gap-1 px-2.5 py-1 rounded text-xs"
                       style={{
-                        border: "1px solid rgba(200,169,110,0.3)",
-                        color: "rgba(232,213,183,0.75)",
-                        background: "rgba(200,169,110,0.05)",
+                        border: "1px solid rgba(99,135,255,0.2)",
+                        color: "var(--text-secondary)",
+                        background: "rgba(99,135,255,0.07)",
                       }}
                     >
                       {item}
                       <button
                         onClick={() => removeItem(key, item)}
-                        className="ml-1 text-xs leading-none"
-                        style={{ color: "rgba(200,169,110,0.4)", cursor: "pointer", background: "none", border: "none" }}
-                        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.9)"; }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.4)"; }}
+                        className="ml-1 leading-none transition-colors duration-150"
+                        style={{ color: "var(--text-muted)", cursor: "pointer", background: "none", border: "none" }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--danger)"; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-muted)"; }}
                         aria-label={`Remove ${item}`}
                       >
                         ×
@@ -195,69 +172,29 @@ export default function PreferencesClient() {
                 <input
                   ref={(el) => { if (el) inputRefs.current[key] = el; }}
                   type="text"
-                  placeholder={`Add ${label.toLowerCase()}…`}
-                  className="flex-1 font-fell italic text-sm px-3 py-2 bg-transparent outline-none"
-                  style={{
-                    border: "1px solid rgba(200,169,110,0.25)",
-                    color: "rgba(232,213,183,0.85)",
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") addItem(key);
-                  }}
-                  onFocus={(e) => {
-                    (e.currentTarget as HTMLInputElement).style.borderColor = "rgba(200,169,110,0.65)";
-                  }}
-                  onBlur={(e) => {
-                    (e.currentTarget as HTMLInputElement).style.borderColor = "rgba(200,169,110,0.25)";
-                  }}
+                  placeholder={`Add ${label}…`}
+                  className="input flex-1 text-sm"
+                  onKeyDown={(e) => { if (e.key === "Enter") addItem(key); }}
                 />
                 <button
                   onClick={() => addItem(key)}
-                  className="font-cinzel text-xs tracking-widest uppercase px-4 py-2 transition-all duration-200"
-                  style={{
-                    border: "1px solid rgba(200,169,110,0.35)",
-                    color: "rgba(200,169,110,0.7)",
-                    background: "transparent",
-                    cursor: "pointer",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(200,169,110,0.75)";
-                    (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,1)";
-                    (e.currentTarget as HTMLButtonElement).style.background = "rgba(200,169,110,0.06)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(200,169,110,0.35)";
-                    (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.7)";
-                    (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-                  }}
+                  className="btn-secondary text-xs px-3"
                 >
                   Add
                 </button>
               </div>
-
-              {/* Divider between sections */}
-              {sectionIdx < SECTIONS.length - 1 && (
-                <div
-                  className="mt-8"
-                  style={{
-                    height: "1px",
-                    background: "linear-gradient(to right, transparent, rgba(200,169,110,0.15), transparent)",
-                  }}
-                />
-              )}
             </motion.div>
           ))}
         </div>
 
-        {/* Footer note */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.8 }}
-          className="mt-16 text-center font-fell italic text-xs"
-          style={{ color: "rgba(232,213,183,0.3)" }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+          className="mt-10 text-xs text-center"
+          style={{ color: "var(--text-muted)" }}
         >
-          Preferences take effect on your next consultation.
+          Preferences apply to your next session.
         </motion.p>
       </div>
     </div>

@@ -4,8 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
-import CandleFlicker from "@/components/CandleFlicker";
-import { NYX_DIALOGUE } from "@/lib/nyx-dialogue";
 
 interface AuthFormProps {
   redirectTo: string;
@@ -43,7 +41,7 @@ export default function AuthForm({ redirectTo, callbackError }: AuthFormProps) {
           },
         });
         if (error) throw error;
-        setMessage("A letter has been dispatched to your correspondence address. Verify it to enter the library.");
+        setMessage("Check your email to confirm your account, then sign in.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -61,60 +59,66 @@ export default function AuthForm({ redirectTo, callbackError }: AuthFormProps) {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center px-6 py-20 relative z-20"
-      style={{ background: "radial-gradient(ellipse at 50% 40%, rgba(44,30,15,0.12) 0%, transparent 70%)" }}
+      className="min-h-screen flex items-center justify-center px-6 py-16"
+      style={{ background: "var(--bg-base)" }}
     >
-      {/* Candles */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.2 }}
-        className="flex gap-10 mb-10"
-      >
-        <CandleFlicker size={24} />
-        <CandleFlicker size={32} />
-        <CandleFlicker size={24} />
-      </motion.div>
+      {/* Ambient glow */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          top: "20%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: 500,
+          height: 400,
+          background: "radial-gradient(ellipse, rgba(99,135,255,0.05) 0%, transparent 70%)",
+        }}
+      />
 
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-sm"
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-sm relative z-10"
       >
+        {/* Logo mark */}
+        <div className="flex justify-center mb-8">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            style={{ background: "var(--brand)", boxShadow: "0 0 20px rgba(99,135,255,0.3)" }}
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M2 14L9 4L16 14" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M5 10.5H13" stroke="white" strokeWidth="1.75" strokeLinecap="round"/>
+            </svg>
+          </div>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8">
           <AnimatePresence mode="wait">
             <motion.h1
               key={mode}
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.4 }}
-              className="font-cinzel mb-2 leading-snug"
-              style={{ fontSize: "1.05rem", color: "var(--gold)", letterSpacing: "0.05em" }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.3 }}
+              className="font-semibold text-xl mb-2"
+              style={{ color: "var(--text-primary)" }}
             >
-              {isSignIn ? NYX_DIALOGUE.auth_sign_in_header : NYX_DIALOGUE.auth_sign_up_header}
+              {isSignIn ? "Welcome back" : "Create your account"}
             </motion.h1>
           </AnimatePresence>
-          <p className="font-fell italic text-sm" style={{ color: "var(--parchment-dim)" }}>
-            {isSignIn ? NYX_DIALOGUE.auth_sign_in_subtitle : NYX_DIALOGUE.auth_sign_up_subtitle}
+          <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
+            {isSignIn
+              ? "Sign in to continue to RecoFlow"
+              : "Start getting smarter book recommendations"}
           </p>
         </div>
 
-        <div className="gold-divider-center mb-8">✦</div>
-
-        {/* Form card */}
-        <div
-          style={{
-            background: "linear-gradient(160deg, rgba(18,13,7,0.98) 0%, rgba(14,10,5,0.96) 100%)",
-            border: "1px solid var(--border-subtle)",
-            borderBottom: "1px solid var(--border-mid)",
-            boxShadow: "0 16px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(200,169,110,0.04)",
-            padding: "2.25rem 2rem",
-          }}
-        >
-          <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Card */}
+        <div className="card p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <AnimatePresence>
               {mode === "signup" && (
                 <motion.div
@@ -122,13 +126,14 @@ export default function AuthForm({ redirectTo, callbackError }: AuthFormProps) {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ duration: 0.25 }}
+                  className="overflow-hidden"
                 >
-                  <label className="label-overline block mb-2">Your Name</label>
+                  <label className="label block mb-1.5">Your name</label>
                   <input
                     type="text"
-                    className="nyx-input"
-                    placeholder="As you wish to be known"
+                    className="input"
+                    placeholder="How should we call you?"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     autoComplete="name"
@@ -138,11 +143,11 @@ export default function AuthForm({ redirectTo, callbackError }: AuthFormProps) {
             </AnimatePresence>
 
             <div>
-              <label className="label-overline block mb-2">Correspondence</label>
+              <label className="label block mb-1.5">Email</label>
               <input
                 type="email"
-                className="nyx-input"
-                placeholder={NYX_DIALOGUE.auth_email_placeholder}
+                className="input"
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -151,11 +156,11 @@ export default function AuthForm({ redirectTo, callbackError }: AuthFormProps) {
             </div>
 
             <div>
-              <label className="label-overline block mb-2">Cipher Key</label>
+              <label className="label block mb-1.5">Password</label>
               <input
                 type="password"
-                className="nyx-input"
-                placeholder={NYX_DIALOGUE.auth_password_placeholder}
+                className="input"
+                placeholder="Min. 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -164,7 +169,6 @@ export default function AuthForm({ redirectTo, callbackError }: AuthFormProps) {
               />
             </div>
 
-            {/* Feedback */}
             <AnimatePresence>
               {error && (
                 <motion.p
@@ -172,10 +176,10 @@ export default function AuthForm({ redirectTo, callbackError }: AuthFormProps) {
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className="font-fell italic text-sm"
-                  style={{ color: "#d97474" }}
+                  className="text-sm"
+                  style={{ color: "var(--danger)" }}
                 >
-                  ✦ {error}
+                  {error}
                 </motion.p>
               )}
               {message && (
@@ -184,39 +188,36 @@ export default function AuthForm({ redirectTo, callbackError }: AuthFormProps) {
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className="font-fell italic text-sm leading-relaxed"
-                  style={{ color: "rgba(200,169,110,0.75)" }}
+                  className="text-sm"
+                  style={{ color: "var(--success)" }}
                 >
-                  ✦ {message}
+                  {message}
                 </motion.p>
               )}
             </AnimatePresence>
 
-            <div className="pt-2">
-              <button type="submit" className="btn-primary w-full" disabled={loading}>
-                {loading
-                  ? isSignIn ? NYX_DIALOGUE.auth_signing_in : NYX_DIALOGUE.auth_signing_up
-                  : isSignIn ? "Enter the Library" : "Sign the Ledger"}
-              </button>
-            </div>
+            <button type="submit" className="btn-primary w-full" disabled={loading}>
+              {loading
+                ? isSignIn ? "Signing in…" : "Creating account…"
+                : isSignIn ? "Sign in" : "Create account"}
+            </button>
           </form>
         </div>
 
         {/* Toggle mode */}
-        <div className="text-center mt-6">
+        <p className="text-center mt-5 text-sm" style={{ color: "var(--text-tertiary)" }}>
+          {isSignIn ? "Don't have an account?" : "Already have an account?"}{" "}
           <button
             type="button"
             onClick={() => { setMode(isSignIn ? "signup" : "signin"); setError(""); setMessage(""); }}
-            className="font-fell italic text-sm transition-colors duration-200"
-            style={{ color: "rgba(200,169,110,0.38)", background: "none", border: "none", cursor: "pointer" }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.7)"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.38)"; }}
+            className="transition-colors duration-150"
+            style={{ color: "var(--brand-subtle)", background: "none", border: "none", cursor: "pointer", fontWeight: 500 }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--brand)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--brand-subtle)"; }}
           >
-            {isSignIn
-              ? "First visit? Sign your name in the ledger →"
-              : "Already inscribed? Enter instead →"}
+            {isSignIn ? "Sign up" : "Sign in"}
           </button>
-        </div>
+        </p>
       </motion.div>
     </div>
   );

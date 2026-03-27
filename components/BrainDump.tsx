@@ -18,7 +18,7 @@ export default function BrainDump({ questions, onComplete }: BrainDumpProps) {
 
   const currentQuestion = questions[currentIndex];
   const isLast = currentIndex === questions.length - 1;
-  const progress = ((currentIndex) / questions.length) * 100;
+  const progress = (currentIndex / questions.length) * 100;
 
   function handleNext() {
     if (!currentAnswer.trim()) return;
@@ -48,30 +48,20 @@ export default function BrainDump({ questions, onComplete }: BrainDumpProps) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div>
       {/* Progress */}
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
-          <span
-            className="font-cinzel text-xs tracking-widest uppercase"
-            style={{ color: "rgba(200,169,110,0.5)" }}
-          >
+          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
             Question {currentIndex + 1} of {questions.length}
           </span>
-          <span
-            className="font-fell italic text-xs"
-            style={{ color: "rgba(200,169,110,0.4)" }}
-          >
+          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
             {currentQuestion?.category === "intellectual" ? "Intellectual" : "Emotional"}
           </span>
         </div>
-        <div
-          className="h-px w-full"
-          style={{ background: "rgba(200,169,110,0.15)" }}
-        >
+        <div className="progress-track">
           <motion.div
-            className="h-px"
-            style={{ background: "rgba(200,169,110,0.5)" }}
+            className="progress-fill"
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.4 }}
           />
@@ -81,47 +71,35 @@ export default function BrainDump({ questions, onComplete }: BrainDumpProps) {
       <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex}
-          initial={{ opacity: 0, x: 20 }}
+          initial={{ opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.35 }}
+          exit={{ opacity: 0, x: -16 }}
+          transition={{ duration: 0.3 }}
         >
-          {/* Nyx asks the question */}
-          <Nyx
-            dialogue={currentQuestion?.question ?? ""}
-            showPortrait={true}
-            className="mb-6"
-            typewriterSpeed={20}
-          />
+          {/* Nyx question */}
+          <Nyx dialogue={currentQuestion?.question ?? ""} className="mb-5" />
 
           {/* Hint */}
           {currentQuestion?.hint && (
-            <p
-              className="font-fell italic text-sm mb-4 ml-20"
-              style={{ color: "rgba(200,169,110,0.4)" }}
-            >
-              ✦ {currentQuestion.hint}
+            <p className="text-xs mb-4 ml-12" style={{ color: "var(--text-muted)" }}>
+              {currentQuestion.hint}
             </p>
           )}
 
           {/* Answer textarea */}
-          <div className="ml-0 md:ml-20">
+          <div>
             <textarea
-              className="nyx-input resize-none"
+              className="textarea resize-none"
               rows={4}
-              placeholder="Speak freely. The library holds no judgment."
+              placeholder="Write freely — your answer shapes the recommendations."
               value={currentAnswer}
               onChange={(e) => setCurrentAnswer(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={submitting}
               autoFocus
-              style={{ fontStyle: "normal" }}
             />
             <div className="flex items-center justify-between mt-3">
-              <span
-                className="font-fell italic text-xs"
-                style={{ color: "rgba(200,169,110,0.3)" }}
-              >
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
                 Ctrl+Enter to continue
               </span>
               <button
@@ -129,11 +107,12 @@ export default function BrainDump({ questions, onComplete }: BrainDumpProps) {
                 onClick={handleNext}
                 disabled={!currentAnswer.trim() || submitting}
               >
-                {submitting
-                  ? "Consulting the oracle..."
-                  : isLast
-                  ? "The ritual is complete"
-                  : "Continue"}
+                {submitting ? (
+                  <span className="flex items-center gap-2">
+                    <span className="spinner" style={{ width: 14, height: 14 }} />
+                    Generating…
+                  </span>
+                ) : isLast ? "Get recommendations →" : "Next →"}
               </button>
             </div>
           </div>

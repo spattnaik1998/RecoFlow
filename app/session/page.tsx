@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Nyx from "@/components/Nyx";
 import BrainDump from "@/components/BrainDump";
-import CandleFlicker from "@/components/CandleFlicker";
 import { NYX_DIALOGUE, nyxAnalysisResult } from "@/lib/nyx-dialogue";
 import { SESSION_KEYS } from "@/types";
 import type { ThematicIntersection, NyxQuestion, BrainDumpAnswer, Book } from "@/types";
@@ -26,6 +25,8 @@ const ANALYSIS_STEPS = [
   NYX_DIALOGUE.analysis_step3,
 ];
 
+const PHASES = ["Books", "Analyze", "Reflect", "Discover"];
+
 export default function SessionPage() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("loading_books");
@@ -35,6 +36,12 @@ export default function SessionPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const initialized = useRef(false);
 
+  const activePhaseIndex = (() => {
+    if (phase === "loading_books" || phase === "analysis_in_progress" || phase === "analysis_done") return 1;
+    if (phase === "generating_questions" || phase === "brain_dump") return 2;
+    return 3;
+  })();
+
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
@@ -42,7 +49,6 @@ export default function SessionPage() {
   }, []);
 
   async function runSession() {
-    // ── Phase 1: Book Analysis ────────────────────────────────────────────────
     const booksRaw = sessionStorage.getItem(SESSION_KEYS.BOOKS);
     const sessionId = sessionStorage.getItem(SESSION_KEYS.SESSION_ID);
 
@@ -54,7 +60,6 @@ export default function SessionPage() {
     const books: Book[] = JSON.parse(booksRaw);
     setPhase("analysis_in_progress");
 
-    // Cycle through analysis step messages
     const stepTimer = setInterval(() => {
       setStepIndex((i) => Math.min(i + 1, ANALYSIS_STEPS.length - 1));
     }, 2500);
@@ -78,12 +83,9 @@ export default function SessionPage() {
       sessionStorage.setItem(SESSION_KEYS.INTERSECTION, JSON.stringify(inter));
       setPhase("analysis_done");
 
-      // Short pause so Nyx dialogue is readable
       await delay(2800);
 
-      // ── Phase 2: Question Generation (SSE) ──────────────────────────────────
       setPhase("generating_questions");
-
       const qs = await fetchQuestionsSSE(inter);
       setQuestions(qs);
       sessionStorage.setItem(SESSION_KEYS.QUESTIONS, JSON.stringify(qs));
@@ -151,11 +153,7 @@ export default function SessionPage() {
       const recRes = await fetch("/api/get-recommendations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          intersection,
-          brain_dump: answers,
-          session_id: sessionId,
-        }),
+        body: JSON.stringify({ intersection, brain_dump: answers, session_id: sessionId }),
       });
 
       if (!recRes.ok) {
@@ -176,13 +174,28 @@ export default function SessionPage() {
   }
 
   return (
-    <div className="min-h-screen px-6 py-16">
+    <div className="min-h-screen pt-20 pb-16 px-6" style={{ background: "var(--bg-base)" }}>
       <div className="max-w-2xl mx-auto">
-        {/* Candles */}
-        <div className="flex gap-10 justify-center mb-10">
-          <CandleFlicker size={26} />
-          <CandleFlicker size={32} />
-          <CandleFlicker size={26} />
+
+        {/* Step indicator */}
+        <div className="flex items-center gap-2 mb-10 justify-center">
+          {PHASES.map((step, i) => (
+            <div key={step} className="flex items-center gap-2">
+              <div className={`step-dot ${i <= activePhaseIndex ? "step-dot-active" : ""}`} />
+              <span
+                className="text-xs"
+                style={{ color: i <= activePhaseIndex ? "var(--brand-subtle)" : "var(--text-muted)" }}
+              >
+                {step}
+              </span>
+              {i < PHASES.length - 1 && (
+                <div
+                  className="w-8 h-px"
+                  style={{ background: i < activePhaseIndex ? "rgba(99,135,255,0.35)" : "rgba(99,135,255,0.12)" }}
+                />
+              )}
+            </div>
+          ))}
         </div>
 
         <AnimatePresence mode="wait">
@@ -193,23 +206,23 @@ export default function SessionPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-center"
+              className="text-center py-16"
             >
-              <h2 className="font-cinzel text-2xl mb-4" style={{ color: "#C8A96E" }}>
-                {NYX_DIALOGUE.analysis_header}
+              <div className="spinner mx-auto mb-6" />
+              <h2
+                className="font-display text-xl mb-3"
+                style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}
+              >
+                Analyzing your reading list
               </h2>
-              <div className="gold-divider-center mb-8">✦</div>
-              <div className="loading-dots justify-center flex mb-6">
-                <span /><span /><span />
-              </div>
               <AnimatePresence mode="wait">
                 <motion.p
                   key={stepIndex}
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  className="font-fell italic"
-                  style={{ color: "rgba(232,213,183,0.6)" }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="text-sm"
+                  style={{ color: "var(--text-tertiary)" }}
                 >
                   {ANALYSIS_STEPS[stepIndex]}
                 </motion.p>
@@ -217,21 +230,15 @@ export default function SessionPage() {
             </motion.div>
           )}
 
-          {/* Analysis done — show intersection */}
+          {/* Analysis done */}
           {phase === "analysis_done" && intersection && (
             <motion.div
               key="analysis-done"
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="text-center"
             >
-              <Nyx
-                dialogue={nyxAnalysisResult(
-                  intersection.intersection.intellectual_territory
-                )}
-                showPortrait={true}
-              />
+              <Nyx dialogue={nyxAnalysisResult(intersection.intersection.intellectual_territory)} />
             </motion.div>
           )}
 
@@ -242,12 +249,10 @@ export default function SessionPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-center"
+              className="text-center py-16"
             >
-              <div className="loading-dots justify-center flex mb-4">
-                <span /><span /><span />
-              </div>
-              <p className="font-fell italic" style={{ color: "rgba(232,213,183,0.5)" }}>
+              <div className="spinner mx-auto mb-6" />
+              <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
                 {NYX_DIALOGUE.questions_thinking}
               </p>
             </motion.div>
@@ -257,20 +262,22 @@ export default function SessionPage() {
           {phase === "brain_dump" && questions.length > 0 && (
             <motion.div
               key="brain-dump"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
             >
-              <div className="text-center mb-10">
-                <h2 className="font-cinzel text-2xl mb-2" style={{ color: "#C8A96E" }}>
+              <div className="mb-8">
+                <h2
+                  className="font-display text-xl mb-1"
+                  style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}
+                >
                   {NYX_DIALOGUE.questions_header}
                 </h2>
-                <div className="gold-divider-center">✦</div>
+                <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
+                  Your answers sharpen the recommendations.
+                </p>
               </div>
-              <BrainDump
-                questions={questions}
-                onComplete={handleBrainDumpComplete}
-              />
+              <BrainDump questions={questions} onComplete={handleBrainDumpComplete} />
             </motion.div>
           )}
 
@@ -281,16 +288,16 @@ export default function SessionPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-center"
+              className="text-center py-16"
             >
-              <h2 className="font-cinzel text-2xl mb-4" style={{ color: "#C8A96E" }}>
-                The Oracle Deliberates
+              <div className="spinner mx-auto mb-6" />
+              <h2
+                className="font-display text-xl mb-3"
+                style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}
+              >
+                Generating recommendations
               </h2>
-              <div className="gold-divider-center mb-8">✦</div>
-              <div className="loading-dots justify-center flex mb-6">
-                <span /><span /><span />
-              </div>
-              <p className="font-fell italic" style={{ color: "rgba(232,213,183,0.5)" }}>
+              <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
                 {NYX_DIALOGUE.loading_recommendations}
               </p>
             </motion.div>
@@ -302,18 +309,12 @@ export default function SessionPage() {
               key="error"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center"
+              className="text-center py-16"
             >
-              <Nyx
-                dialogue={errorMessage || NYX_DIALOGUE.error_generic}
-                showPortrait={true}
-              />
+              <Nyx dialogue={errorMessage || NYX_DIALOGUE.error_generic} />
               <div className="mt-8">
-                <button
-                  className="btn-ghost"
-                  onClick={() => router.push("/enter")}
-                >
-                  Return to the entrance
+                <button className="btn-ghost" onClick={() => router.push("/enter")}>
+                  Start over
                 </button>
               </div>
             </motion.div>

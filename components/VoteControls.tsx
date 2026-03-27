@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import type { CircleVoteValue } from "@/types";
 
 interface VoteControlsProps {
@@ -9,10 +9,10 @@ interface VoteControlsProps {
   circleId: string;
 }
 
-const VOTES: { value: CircleVoteValue; label: string; symbol: string }[] = [
-  { value: "like", label: "Endorse", symbol: "✦" },
-  { value: "neutral", label: "Neutral", symbol: "◌" },
-  { value: "dislike", label: "Dissent", symbol: "✕" },
+const VOTES: { value: CircleVoteValue; label: string }[] = [
+  { value: "like",    label: "Yes"     },
+  { value: "neutral", label: "Neutral" },
+  { value: "dislike", label: "No"      },
 ];
 
 export default function VoteControls({ recommendationId, circleId }: VoteControlsProps) {
@@ -21,7 +21,6 @@ export default function VoteControls({ recommendationId, circleId }: VoteControl
 
   async function castVote(v: CircleVoteValue) {
     if (submitting) return;
-    // Toggle off if same vote
     const newVote = vote === v ? null : v;
     setSubmitting(true);
     try {
@@ -36,48 +35,31 @@ export default function VoteControls({ recommendationId, circleId }: VoteControl
   }
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="flex items-center gap-1 mt-1"
-      >
-        <span
-          className="font-cinzel text-xs tracking-widest uppercase mr-2"
-          style={{ color: "rgba(200,169,110,0.3)", fontSize: "0.6rem" }}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex items-center gap-1.5"
+    >
+      <span className="text-xs mr-1" style={{ color: "var(--text-muted)" }}>
+        Circle vote
+      </span>
+      {VOTES.map(({ value, label }) => (
+        <button
+          key={value}
+          onClick={() => castVote(value)}
+          disabled={submitting}
+          title={label}
+          className="text-xs px-2.5 py-1 rounded transition-all duration-150"
+          style={{
+            border: `1px solid ${vote === value ? "rgba(99,135,255,0.4)" : "rgba(99,135,255,0.12)"}`,
+            color: vote === value ? "var(--brand-subtle)" : "var(--text-muted)",
+            background: vote === value ? "rgba(99,135,255,0.1)" : "transparent",
+            cursor: submitting ? "not-allowed" : "pointer",
+          }}
         >
-          Circle
-        </span>
-        {VOTES.map(({ value, label, symbol }) => (
-          <button
-            key={value}
-            onClick={() => castVote(value)}
-            disabled={submitting}
-            title={label}
-            className="font-fell text-sm transition-all duration-150 px-2 py-0.5"
-            style={{
-              border: `1px solid ${vote === value ? "rgba(200,169,110,0.6)" : "rgba(200,169,110,0.15)"}`,
-              color: vote === value ? "#C8A96E" : "rgba(200,169,110,0.4)",
-              background: vote === value ? "rgba(200,169,110,0.06)" : "transparent",
-              cursor: submitting ? "not-allowed" : "pointer",
-            }}
-            onMouseEnter={(e) => {
-              if (vote !== value) {
-                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(200,169,110,0.4)";
-                (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.8)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (vote !== value) {
-                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(200,169,110,0.15)";
-                (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.4)";
-              }
-            }}
-          >
-            {symbol}
-          </button>
-        ))}
-      </motion.div>
-    </AnimatePresence>
+          {label}
+        </button>
+      ))}
+    </motion.div>
   );
 }

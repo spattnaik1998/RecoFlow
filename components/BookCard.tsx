@@ -19,6 +19,7 @@ interface BookCardProps {
   circleContext?: { circleId: string };
 }
 
+const RANK_NUMERALS = ["I", "II", "III", "IV", "V"];
 const RANK_LABELS = [
   "The Oracle's Choice",
   "Second Sight",
@@ -28,11 +29,11 @@ const RANK_LABELS = [
 ];
 
 const DISLIKE_REASONS: { value: DislikeReason; label: string }[] = [
-  { value: "too_academic", label: "Too academic" },
+  { value: "too_academic",   label: "Too academic"  },
   { value: "too_commercial", label: "Too commercial" },
-  { value: "already_read", label: "Already read" },
-  { value: "wrong_tone", label: "Wrong tone" },
-  { value: "not_relevant", label: "Not relevant" },
+  { value: "already_read",   label: "Already read"  },
+  { value: "wrong_tone",     label: "Wrong tone"    },
+  { value: "not_relevant",   label: "Not relevant"  },
 ];
 
 export default function BookCard({
@@ -48,6 +49,8 @@ export default function BookCard({
   const [submitting, setSubmitting] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
 
+  const isPrime = rank === 1;
+
   async function submitFeedback(v: FeedbackVote, reason?: DislikeReason) {
     if (!feedbackState?.recommendationId || submitting || confirmed) return;
     setSubmitting(true);
@@ -55,108 +58,98 @@ export default function BookCard({
       await fetch(`/api/recommendations/${feedbackState.recommendationId}/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vote: v,
-          reason: reason ?? undefined,
-          session_id: feedbackState.sessionId,
-        }),
+        body: JSON.stringify({ vote: v, reason: reason ?? undefined, session_id: feedbackState.sessionId }),
       });
       setVote(v);
       setShowReasons(false);
       setConfirmed(true);
-    } catch {
-      // Silent fail — feedback is best-effort
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  function handleThumbsUp() {
-    if (confirmed) return;
-    submitFeedback("like");
-  }
-
-  function handleThumbsDown() {
-    if (confirmed) return;
-    setVote("dislike");
-    setShowReasons(true);
-  }
-
-  function handleReason(reason: DislikeReason) {
-    submitFeedback("dislike", reason);
+    } catch {/* silent */}
+    setSubmitting(false);
   }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      animate={revealed ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 30, scale: 0.95 }}
-      transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
-      className="book-card p-6 relative overflow-hidden"
+      initial={{ opacity: 0, y: 28, scale: 0.97 }}
+      animate={revealed ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 28, scale: 0.97 }}
+      transition={{ duration: 0.9, delay, ease: [0.16, 1, 0.3, 1] }}
+      className={`book-card p-7 relative overflow-hidden ${isPrime ? "book-card-prime" : ""}`}
     >
-      {/* Rank badge */}
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <span
-            className="font-cinzel text-xs tracking-widest uppercase"
-            style={{ color: rank === 1 ? "#C8A96E" : "rgba(200,169,110,0.5)" }}
-          >
-            {RANK_LABELS[rank - 1] ?? `Recommendation ${rank}`}
-          </span>
-        </div>
-        <div
-          className="font-cinzel text-2xl font-bold"
-          style={{ color: rank === 1 ? "#C8A96E" : "rgba(200,169,110,0.3)" }}
+      {/* Rank header row */}
+      <div className="flex items-start justify-between mb-5">
+        <span
+          className="label-overline"
+          style={{ color: isPrime ? "var(--gold-dim)" : "rgba(200,169,110,0.3)" }}
         >
-          {rank === 1 ? "I" : rank === 2 ? "II" : rank === 3 ? "III" : rank === 4 ? "IV" : "V"}
-        </div>
+          {RANK_LABELS[rank - 1] ?? `Recommendation ${rank}`}
+        </span>
+        <span
+          className="font-cinzel font-bold"
+          style={{
+            fontSize: "1.5rem",
+            lineHeight: 1,
+            color: isPrime ? "rgba(200,169,110,0.5)" : "rgba(200,169,110,0.15)",
+          }}
+        >
+          {RANK_NUMERALS[rank - 1] ?? rank}
+        </span>
       </div>
 
-      {/* Gold divider */}
-      <div className="gold-divider" />
+      {/* Divider */}
+      <div className="gold-divider" style={{ marginTop: 0 }} />
 
-      {/* Book title & author */}
+      {/* Title & author */}
       <h3
-        className="font-cinzel text-lg mb-1 leading-tight"
-        style={{ color: "#E8D5B7" }}
+        className="font-cinzel leading-snug mb-1"
+        style={{
+          fontSize: "0.98rem",
+          color: isPrime ? "var(--parchment)" : "rgba(232,213,183,0.88)",
+          letterSpacing: "0.03em",
+        }}
       >
         {recommendation.title}
       </h3>
-      <p className="font-fell italic mb-4" style={{ color: "rgba(200,169,110,0.7)", fontSize: "0.95rem" }}>
+      <p
+        className="font-fell italic mb-5"
+        style={{ fontSize: "0.92rem", color: "var(--gold-dim)" }}
+      >
         {recommendation.author}
       </p>
 
       {/* Thematic connection */}
       <p
-        className="font-fell leading-relaxed text-sm mb-3"
-        style={{ color: "rgba(232, 213, 183, 0.75)" }}
+        className="font-fell leading-relaxed mb-4"
+        style={{ fontSize: "0.92rem", color: "rgba(232,213,183,0.68)" }}
       >
         {recommendation.thematic_connection}
       </p>
 
       {/* Why now */}
       {recommendation.why_now && (
-        <div className="mt-4 pt-4 border-t border-gold/10">
+        <div
+          className="pt-4 mt-1"
+          style={{ borderTop: "1px solid rgba(200,169,110,0.08)" }}
+        >
           <p
-            className="font-fell italic text-xs leading-relaxed"
-            style={{ color: "rgba(200,169,110,0.6)" }}
+            className="font-fell italic"
+            style={{ fontSize: "0.82rem", color: "rgba(200,169,110,0.5)", lineHeight: 1.7 }}
           >
-            <span className="not-italic">✦ </span>
+            <span style={{ opacity: 0.7 }}>✦ </span>
             {recommendation.why_now}
           </p>
         </div>
       )}
 
-      {/* Feedback controls (only when feedbackState provided) */}
+      {/* Feedback controls */}
       {feedbackState && (
-        <div className="mt-4 pt-3 border-t border-gold/10">
+        <div className="mt-4 pt-3" style={{ borderTop: "1px solid rgba(200,169,110,0.07)" }}>
           <AnimatePresence mode="wait">
             {confirmed ? (
               <motion.p
                 key="confirmed"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="font-fell italic text-xs"
-                style={{ color: "rgba(200,169,110,0.5)" }}
+                className="font-fell italic"
+                style={{ fontSize: "0.78rem", color: "rgba(200,169,110,0.45)" }}
               >
                 {vote === "like" ? "The oracle notes your approval." : "Your counsel has been recorded."}
               </motion.p>
@@ -167,32 +160,31 @@ export default function BookCard({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
               >
-                <p
-                  className="font-cinzel text-xs tracking-wider mb-2"
-                  style={{ color: "rgba(200,169,110,0.5)" }}
-                >
+                <p className="label-overline mb-3" style={{ color: "rgba(200,169,110,0.4)" }}>
                   Why not this one?
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {DISLIKE_REASONS.map(({ value, label }) => (
                     <button
                       key={value}
-                      onClick={() => handleReason(value)}
+                      onClick={() => submitFeedback("dislike", value)}
                       disabled={submitting}
-                      className="font-fell italic text-xs px-3 py-1 transition-all duration-200"
+                      className="font-fell italic transition-all duration-200"
                       style={{
-                        border: "1px solid rgba(200,169,110,0.25)",
-                        color: "rgba(232,213,183,0.6)",
+                        fontSize: "0.78rem",
+                        padding: "0.25rem 0.75rem",
+                        border: "1px solid rgba(200,169,110,0.18)",
+                        color: "rgba(232,213,183,0.55)",
                         background: "transparent",
                         cursor: submitting ? "not-allowed" : "pointer",
                       }}
                       onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(200,169,110,0.6)";
-                        (e.currentTarget as HTMLButtonElement).style.color = "rgba(232,213,183,0.9)";
+                        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(200,169,110,0.45)";
+                        (e.currentTarget as HTMLButtonElement).style.color = "rgba(232,213,183,0.85)";
                       }}
                       onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(200,169,110,0.25)";
-                        (e.currentTarget as HTMLButtonElement).style.color = "rgba(232,213,183,0.6)";
+                        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(200,169,110,0.18)";
+                        (e.currentTarget as HTMLButtonElement).style.color = "rgba(232,213,183,0.55)";
                       }}
                     >
                       {label}
@@ -200,8 +192,15 @@ export default function BookCard({
                   ))}
                   <button
                     onClick={() => { setShowReasons(false); setVote(null); }}
-                    className="font-fell italic text-xs px-3 py-1"
-                    style={{ color: "rgba(200,169,110,0.3)", cursor: "pointer" }}
+                    className="font-fell italic"
+                    style={{
+                      fontSize: "0.78rem",
+                      padding: "0.25rem 0.75rem",
+                      color: "rgba(200,169,110,0.3)",
+                      cursor: "pointer",
+                      background: "none",
+                      border: "none",
+                    }}
                   >
                     Cancel
                   </button>
@@ -215,28 +214,54 @@ export default function BookCard({
                 className="flex items-center gap-4"
               >
                 <span
-                  className="font-cinzel text-xs tracking-widest uppercase"
-                  style={{ color: "rgba(200,169,110,0.35)" }}
+                  className="label-overline"
+                  style={{ color: "rgba(200,169,110,0.28)", fontSize: "0.58rem" }}
                 >
-                  Was this helpful?
+                  Resonance
                 </span>
                 <button
-                  onClick={handleThumbsUp}
+                  onClick={() => submitFeedback("like")}
                   title="This resonates"
-                  className="text-base transition-all duration-150 hover:scale-110"
-                  style={{ color: "rgba(200,169,110,0.45)", cursor: "pointer", background: "none", border: "none", padding: 0 }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.9)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.45)"; }}
+                  style={{
+                    fontSize: "0.9rem",
+                    color: "rgba(200,169,110,0.35)",
+                    cursor: "pointer",
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    transition: "color 0.15s, transform 0.15s",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.9)";
+                    (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.15)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.35)";
+                    (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+                  }}
                 >
                   ✦
                 </button>
                 <button
-                  onClick={handleThumbsDown}
+                  onClick={() => { setVote("dislike"); setShowReasons(true); }}
                   title="Not for me"
-                  className="text-base transition-all duration-150 hover:scale-110"
-                  style={{ color: "rgba(200,169,110,0.45)", cursor: "pointer", background: "none", border: "none", padding: 0 }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.9)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.45)"; }}
+                  style={{
+                    fontSize: "0.9rem",
+                    color: "rgba(200,169,110,0.35)",
+                    cursor: "pointer",
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    transition: "color 0.15s, transform 0.15s",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.9)";
+                    (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.15)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.35)";
+                    (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+                  }}
                 >
                   ✕
                 </button>
@@ -256,13 +281,12 @@ export default function BookCard({
         </div>
       )}
 
-      {/* Decorative corner */}
-      {rank === 1 && (
+      {/* Prime card ambient glow */}
+      {isPrime && (
         <div
-          className="absolute top-0 right-0 w-16 h-16 pointer-events-none"
+          className="absolute inset-0 pointer-events-none"
           style={{
-            background:
-              "radial-gradient(circle at top right, rgba(200,169,110,0.08) 0%, transparent 70%)",
+            background: "radial-gradient(ellipse at top right, rgba(200,169,110,0.05) 0%, transparent 60%)",
           }}
         />
       )}

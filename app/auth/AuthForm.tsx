@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import CandleFlicker from "@/components/CandleFlicker";
 import { NYX_DIALOGUE } from "@/lib/nyx-dialogue";
@@ -14,7 +14,6 @@ interface AuthFormProps {
 
 export default function AuthForm({ redirectTo, callbackError }: AuthFormProps) {
   const router = useRouter();
-
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,9 +31,7 @@ export default function AuthForm({ redirectTo, callbackError }: AuthFormProps) {
     setError("");
     setMessage("");
     setLoading(true);
-
     const supabase = createClient();
-
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
@@ -46,14 +43,9 @@ export default function AuthForm({ redirectTo, callbackError }: AuthFormProps) {
           },
         });
         if (error) throw error;
-        setMessage(
-          "A letter has been dispatched to your correspondence address. Verify it to enter the library."
-        );
+        setMessage("A letter has been dispatched to your correspondence address. Verify it to enter the library.");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         router.push(redirectTo);
         router.refresh();
@@ -65,156 +57,164 @@ export default function AuthForm({ redirectTo, callbackError }: AuthFormProps) {
     }
   }
 
-  const header =
-    mode === "signin"
-      ? NYX_DIALOGUE.auth_sign_in_header
-      : NYX_DIALOGUE.auth_sign_up_header;
-  const subtitle =
-    mode === "signin"
-      ? NYX_DIALOGUE.auth_sign_in_subtitle
-      : NYX_DIALOGUE.auth_sign_up_subtitle;
+  const isSignIn = mode === "signin";
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16 relative z-20">
-      {/* Candle row */}
-      <div className="flex gap-12 mb-10">
-        <CandleFlicker size={30} />
-        <CandleFlicker size={38} />
-        <CandleFlicker size={30} />
-      </div>
+    <div
+      className="min-h-screen flex flex-col items-center justify-center px-6 py-20 relative z-20"
+      style={{ background: "radial-gradient(ellipse at 50% 40%, rgba(44,30,15,0.12) 0%, transparent 70%)" }}
+    >
+      {/* Candles */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.2 }}
+        className="flex gap-10 mb-10"
+      >
+        <CandleFlicker size={24} />
+        <CandleFlicker size={32} />
+        <CandleFlicker size={24} />
+      </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="w-full max-w-md"
+        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-sm"
       >
         {/* Header */}
         <div className="text-center mb-8">
-          <h1
-            className="font-cinzel text-2xl mb-3 leading-snug"
-            style={{ color: "#C8A96E" }}
-          >
-            {header}
-          </h1>
-          <p className="font-fell italic" style={{ color: "rgba(232,213,183,0.6)" }}>
-            {subtitle}
+          <AnimatePresence mode="wait">
+            <motion.h1
+              key={mode}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.4 }}
+              className="font-cinzel mb-2 leading-snug"
+              style={{ fontSize: "1.05rem", color: "var(--gold)", letterSpacing: "0.05em" }}
+            >
+              {isSignIn ? NYX_DIALOGUE.auth_sign_in_header : NYX_DIALOGUE.auth_sign_up_header}
+            </motion.h1>
+          </AnimatePresence>
+          <p className="font-fell italic text-sm" style={{ color: "var(--parchment-dim)" }}>
+            {isSignIn ? NYX_DIALOGUE.auth_sign_in_subtitle : NYX_DIALOGUE.auth_sign_up_subtitle}
           </p>
         </div>
 
-        {/* Gold divider */}
         <div className="gold-divider-center mb-8">✦</div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="victorian-border p-8 space-y-4">
-          {mode === "signup" && (
+        {/* Form card */}
+        <div
+          style={{
+            background: "linear-gradient(160deg, rgba(18,13,7,0.98) 0%, rgba(14,10,5,0.96) 100%)",
+            border: "1px solid var(--border-subtle)",
+            borderBottom: "1px solid var(--border-mid)",
+            boxShadow: "0 16px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(200,169,110,0.04)",
+            padding: "2.25rem 2rem",
+          }}
+        >
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <AnimatePresence>
+              {mode === "signup" && (
+                <motion.div
+                  key="displayName"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <label className="label-overline block mb-2">Your Name</label>
+                  <input
+                    type="text"
+                    className="nyx-input"
+                    placeholder="As you wish to be known"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    autoComplete="name"
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div>
-              <label
-                className="font-cinzel text-xs tracking-widest uppercase block mb-2"
-                style={{ color: "rgba(200,169,110,0.6)" }}
-              >
-                Your Name
-              </label>
+              <label className="label-overline block mb-2">Correspondence</label>
               <input
-                type="text"
+                type="email"
                 className="nyx-input"
-                placeholder="As you wish to be known"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                autoComplete="name"
+                placeholder={NYX_DIALOGUE.auth_email_placeholder}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
               />
             </div>
-          )}
 
-          <div>
-            <label
-              className="font-cinzel text-xs tracking-widest uppercase block mb-2"
-              style={{ color: "rgba(200,169,110,0.6)" }}
-            >
-              Correspondence Address
-            </label>
-            <input
-              type="email"
-              className="nyx-input"
-              placeholder={NYX_DIALOGUE.auth_email_placeholder}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-          </div>
+            <div>
+              <label className="label-overline block mb-2">Cipher Key</label>
+              <input
+                type="password"
+                className="nyx-input"
+                placeholder={NYX_DIALOGUE.auth_password_placeholder}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete={isSignIn ? "current-password" : "new-password"}
+                minLength={6}
+              />
+            </div>
 
-          <div>
-            <label
-              className="font-cinzel text-xs tracking-widest uppercase block mb-2"
-              style={{ color: "rgba(200,169,110,0.6)" }}
-            >
-              Cipher Key
-            </label>
-            <input
-              type="password"
-              className="nyx-input"
-              placeholder={NYX_DIALOGUE.auth_password_placeholder}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete={mode === "signup" ? "new-password" : "current-password"}
-              minLength={6}
-            />
-          </div>
+            {/* Feedback */}
+            <AnimatePresence>
+              {error && (
+                <motion.p
+                  key="error"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="font-fell italic text-sm"
+                  style={{ color: "#d97474" }}
+                >
+                  ✦ {error}
+                </motion.p>
+              )}
+              {message && (
+                <motion.p
+                  key="message"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="font-fell italic text-sm leading-relaxed"
+                  style={{ color: "rgba(200,169,110,0.75)" }}
+                >
+                  ✦ {message}
+                </motion.p>
+              )}
+            </AnimatePresence>
 
-          {/* Error */}
-          {error && (
-            <p
-              className="font-fell italic text-sm"
-              style={{ color: "#e05c5c" }}
-            >
-              ✦ {error}
-            </p>
-          )}
+            <div className="pt-2">
+              <button type="submit" className="btn-primary w-full" disabled={loading}>
+                {loading
+                  ? isSignIn ? NYX_DIALOGUE.auth_signing_in : NYX_DIALOGUE.auth_signing_up
+                  : isSignIn ? "Enter the Library" : "Sign the Ledger"}
+              </button>
+            </div>
+          </form>
+        </div>
 
-          {/* Success message */}
-          {message && (
-            <p
-              className="font-fell italic text-sm"
-              style={{ color: "rgba(200,169,110,0.8)" }}
-            >
-              ✦ {message}
-            </p>
-          )}
-
-          <div className="pt-2">
-            <button
-              type="submit"
-              className="btn-primary w-full"
-              disabled={loading}
-            >
-              {loading
-                ? mode === "signin"
-                  ? NYX_DIALOGUE.auth_signing_in
-                  : NYX_DIALOGUE.auth_signing_up
-                : mode === "signin"
-                ? "Enter the Library"
-                : "Sign the Ledger"}
-            </button>
-          </div>
-        </form>
-
-        {/* Toggle */}
+        {/* Toggle mode */}
         <div className="text-center mt-6">
           <button
             type="button"
-            onClick={() => {
-              setMode(mode === "signin" ? "signup" : "signin");
-              setError("");
-              setMessage("");
-            }}
-            className="font-fell italic text-sm"
-            style={{ color: "rgba(200,169,110,0.5)" }}
+            onClick={() => { setMode(isSignIn ? "signup" : "signin"); setError(""); setMessage(""); }}
+            className="font-fell italic text-sm transition-colors duration-200"
+            style={{ color: "rgba(200,169,110,0.38)", background: "none", border: "none", cursor: "pointer" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.7)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.38)"; }}
           >
-            {mode === "signin"
-              ? "First visit? Sign your name in the ledger."
-              : "Already inscribed? Enter instead."}
+            {isSignIn
+              ? "First visit? Sign your name in the ledger →"
+              : "Already inscribed? Enter instead →"}
           </button>
         </div>
       </motion.div>

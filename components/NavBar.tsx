@@ -7,118 +7,138 @@ import { createClient } from "@/lib/supabase/client";
 import CircleSwitcher from "@/components/CircleSwitcher";
 import type { User } from "@supabase/supabase-js";
 
-// Pages where the nav should be hidden entirely
 const HIDDEN_ON = ["/", "/auth"];
+
+const NAV_LINKS = [
+  { href: "/enter",   label: "Consult" },
+  { href: "/library", label: "Library" },
+  { href: "/profile", label: "Profile" },
+  { href: "/circles", label: "Circles" },
+];
 
 export default function NavBar() {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
-
-    // Get initial session
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
-
-    // Keep in sync with auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => setUser(session?.user ?? null)
     );
 
-    return () => subscription.unsubscribe();
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
-  // Don't render on landing or auth pages, or when not logged in
   if (HIDDEN_ON.includes(pathname) || !user) return null;
 
   async function handleSignOut() {
     setSigningOut(true);
     const supabase = createClient();
     await supabase.auth.signOut();
-    // Hard redirect so all React state, server cache, and cookies are fully cleared
     window.location.href = "/";
   }
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-3"
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
       style={{
-        background:
-          "linear-gradient(to bottom, rgba(13,10,7,0.95) 0%, rgba(13,10,7,0) 100%)",
-        borderBottom: "1px solid rgba(200,169,110,0.1)",
+        background: scrolled
+          ? "rgba(10, 8, 5, 0.97)"
+          : "linear-gradient(to bottom, rgba(13,10,7,0.92) 0%, rgba(13,10,7,0) 100%)",
+        borderBottom: scrolled ? "1px solid rgba(200,169,110,0.1)" : "1px solid transparent",
+        backdropFilter: scrolled ? "blur(12px)" : "none",
+        boxShadow: scrolled ? "0 4px 32px rgba(0,0,0,0.4)" : "none",
       }}
     >
-      {/* Brand */}
-      <Link
-        href="/enter"
-        className="font-cinzel text-sm tracking-widest uppercase"
-        style={{ color: "rgba(200,169,110,0.7)" }}
-      >
-        RecoFlow
-      </Link>
+      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
 
-      {/* Right-side actions */}
-      <div className="flex items-center gap-6">
-        <CircleSwitcher />
-
+        {/* Brand */}
         <Link
-          href="/library"
-          className="font-fell italic text-sm"
-          style={{ color: "rgba(232,213,183,0.55)" }}
+          href="/enter"
+          className="font-cinzel tracking-widest uppercase transition-opacity duration-200 hover:opacity-80"
+          style={{ color: "var(--gold)", fontSize: "0.8rem", letterSpacing: "0.3em" }}
         >
-          Your Library
+          RecoFlow
         </Link>
 
-        <Link
-          href="/profile"
-          className="font-fell italic text-sm"
-          style={{ color: "rgba(232,213,183,0.55)" }}
-        >
-          Profile
-        </Link>
+        {/* Centre nav links */}
+        <div className="hidden md:flex items-center gap-8">
+          {NAV_LINKS.map(({ href, label }) => {
+            const active = pathname.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className="nav-link"
+                style={{
+                  color: active ? "var(--parchment-mid)" : undefined,
+                  fontStyle: "italic",
+                }}
+              >
+                {label}
+                {active && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      bottom: -2,
+                      left: 0,
+                      width: "100%",
+                      height: 1,
+                      background: "var(--gold-dim)",
+                    }}
+                  />
+                )}
+              </Link>
+            );
+          })}
+        </div>
 
-        <Link
-          href="/preferences"
-          className="font-fell italic text-sm"
-          style={{ color: "rgba(232,213,183,0.55)" }}
-        >
-          Preferences
-        </Link>
+        {/* Right: Circle switcher + sign out */}
+        <div className="flex items-center gap-6">
+          <CircleSwitcher />
 
-        <button
-          onClick={handleSignOut}
-          disabled={signingOut}
-          className="font-cinzel text-xs tracking-widest uppercase px-4 py-2 transition-all duration-200"
-          style={{
-            border: "1px solid rgba(200,169,110,0.35)",
-            color: "rgba(200,169,110,0.7)",
-            background: "transparent",
-            cursor: signingOut ? "not-allowed" : "pointer",
-            opacity: signingOut ? 0.5 : 1,
-          }}
-          onMouseEnter={(e) => {
-            if (!signingOut) {
-              (e.currentTarget as HTMLButtonElement).style.borderColor =
-                "rgba(200,169,110,0.75)";
-              (e.currentTarget as HTMLButtonElement).style.color =
-                "rgba(200,169,110,1)";
-              (e.currentTarget as HTMLButtonElement).style.background =
-                "rgba(200,169,110,0.06)";
-            }
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.borderColor =
-              "rgba(200,169,110,0.35)";
-            (e.currentTarget as HTMLButtonElement).style.color =
-              "rgba(200,169,110,0.7)";
-            (e.currentTarget as HTMLButtonElement).style.background =
-              "transparent";
-          }}
-        >
-          {signingOut ? "Leaving..." : "Sign Out"}
-        </button>
+          <div
+            style={{
+              width: 1,
+              height: 14,
+              background: "rgba(200,169,110,0.15)",
+            }}
+          />
+
+          <button
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="font-cinzel uppercase tracking-widest transition-all duration-200"
+            style={{
+              fontSize: "0.62rem",
+              letterSpacing: "0.2em",
+              color: signingOut ? "var(--parchment-dim)" : "rgba(200,169,110,0.45)",
+              background: "none",
+              border: "none",
+              cursor: signingOut ? "not-allowed" : "pointer",
+              padding: 0,
+            }}
+            onMouseEnter={(e) => {
+              if (!signingOut)
+                (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.85)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = "rgba(200,169,110,0.45)";
+            }}
+          >
+            {signingOut ? "Leaving…" : "Sign Out"}
+          </button>
+        </div>
       </div>
     </nav>
   );

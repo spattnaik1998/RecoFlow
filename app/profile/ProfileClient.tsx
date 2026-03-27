@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import CandleFlicker from "@/components/CandleFlicker";
 import InsightCards from "./InsightCards";
 import type { ProfileDashboardData, SessionSummaryRow } from "@/types";
 
@@ -42,24 +41,17 @@ export default function ProfileClient() {
   }
 
   function formatDate(iso: string) {
-    return new Date(iso).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   }
-
   function formatMemberSince(iso: string) {
-    return new Date(iso).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-    });
+    return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long" });
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="loading-screen">
         <div className="loading-dots"><span /><span /><span /></div>
+        <p className="loading-screen-label">Compiling your archive</p>
       </div>
     );
   }
@@ -67,31 +59,66 @@ export default function ProfileClient() {
   const summary = data?.summary;
 
   return (
-    <div className="min-h-screen px-6 py-16">
+    <div className="min-h-screen px-6 pt-28 pb-20">
       <div className="max-w-2xl mx-auto">
-        {/* Candles */}
-        <div className="flex gap-10 justify-center mb-10">
-          <CandleFlicker size={28} />
-          <CandleFlicker size={36} />
-          <CandleFlicker size={28} />
-        </div>
 
-        {/* Header */}
+        {/* Hero */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-12"
+          className="text-center mb-14"
         >
-          <h1 className="font-cinzel text-3xl mb-2" style={{ color: "#C8A96E" }}>
-            {summary?.display_name ? `${summary.display_name}&rsquo;s Archive` : "Your Archive"}
+          <p className="label-overline mb-3" style={{ color: "rgba(200,169,110,0.35)" }}>
+            Intellectual Archive
+          </p>
+          <h1
+            className="font-cinzel mb-4"
+            style={{ fontSize: "1.5rem", color: "var(--gold)", letterSpacing: "0.04em" }}
+          >
+            {summary?.display_name ? `${summary.display_name}'s Archive` : "Your Archive"}
           </h1>
-          <div className="gold-divider-center mb-4">✦</div>
+          <div className="gold-divider-center mb-6">✦</div>
+
+          {/* Stats row */}
           {summary && summary.total_sessions > 0 && (
-            <p className="font-fell italic text-sm" style={{ color: "rgba(232,213,183,0.5)" }}>
-              Reading since {formatMemberSince(summary.member_since)} &middot;{" "}
-              {summary.total_sessions} consultation{summary.total_sessions !== 1 ? "s" : ""} &middot;{" "}
-              {summary.total_recommendations} path{summary.total_recommendations !== 1 ? "s" : ""} revealed
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="flex items-center justify-center gap-0"
+            >
+              {[
+                { value: summary.total_sessions, label: summary.total_sessions === 1 ? "Consultation" : "Consultations" },
+                { value: summary.total_recommendations, label: summary.total_recommendations === 1 ? "Path Revealed" : "Paths Revealed" },
+                { value: summary.top_themes.length, label: "Recurring Themes" },
+              ].map((stat, i) => (
+                <div key={i} className="flex items-stretch">
+                  <div className="stat-block px-8 py-4">
+                    <span className="stat-number">{stat.value}</span>
+                    <span className="stat-label">{stat.label}</span>
+                  </div>
+                  {i < 2 && (
+                    <div
+                      style={{
+                        width: 1,
+                        background: "rgba(200,169,110,0.12)",
+                        alignSelf: "center",
+                        height: "2.5rem",
+                      }}
+                    />
+                  )}
+                </div>
+              ))}
+            </motion.div>
+          )}
+
+          {summary && summary.member_since && (
+            <p
+              className="font-fell italic mt-4 text-xs"
+              style={{ color: "rgba(200,169,110,0.3)" }}
+            >
+              Reading since {formatMemberSince(summary.member_since)}
             </p>
           )}
         </motion.div>
@@ -101,10 +128,19 @@ export default function ProfileClient() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-16"
+            className="text-center py-20"
           >
-            <p className="font-fell italic mb-4" style={{ color: "rgba(232,213,183,0.5)" }}>
-              The archive is empty. Begin a consultation and your reading identity will take shape.
+            <p
+              className="font-fell italic mb-2"
+              style={{ color: "rgba(200,169,110,0.3)", fontSize: "2rem" }}
+            >
+              ◌
+            </p>
+            <p
+              className="font-fell italic mb-8 leading-relaxed"
+              style={{ color: "rgba(232,213,183,0.4)", fontSize: "0.95rem" }}
+            >
+              The archive is empty. Begin a consultation<br />and your reading identity will take shape.
             </p>
             <Link href="/enter" className="btn-primary">Begin a Consultation</Link>
           </motion.div>
@@ -117,24 +153,20 @@ export default function ProfileClient() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15, duration: 0.7 }}
-              className="mb-10 p-6"
-              style={{
-                border: "1px solid rgba(200,169,110,0.2)",
-                background: "rgba(200,169,110,0.03)",
-              }}
+              className="mb-10"
             >
-              <p
-                className="font-cinzel text-xs tracking-widest uppercase mb-3"
-                style={{ color: "rgba(200,169,110,0.5)" }}
-              >
-                Intellectual Territory
-              </p>
-              <p className="font-fell italic leading-relaxed" style={{ color: "rgba(232,213,183,0.75)" }}>
-                {summary.intellectual_territory}
-              </p>
+              <p className="label-overline mb-4">Intellectual Territory</p>
+              <div className="panel-inset">
+                <p
+                  className="font-fell italic leading-relaxed"
+                  style={{ color: "rgba(232,213,183,0.72)", fontSize: "0.97rem" }}
+                >
+                  {summary.intellectual_territory}
+                </p>
+              </div>
             </motion.div>
 
-            {/* Theme clusters */}
+            {/* Theme cloud */}
             {summary.top_themes.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
@@ -142,32 +174,19 @@ export default function ProfileClient() {
                 transition={{ delay: 0.25, duration: 0.7 }}
                 className="mb-10"
               >
-                <p
-                  className="font-cinzel text-xs tracking-widest uppercase mb-4"
-                  style={{ color: "rgba(200,169,110,0.5)" }}
-                >
-                  Recurring Themes
-                </p>
+                <p className="label-overline mb-5">Recurring Themes</p>
                 <div className="flex flex-wrap gap-2">
                   {summary.top_themes.map((cluster) => {
-                    // Larger font-size = higher frequency (range: 0.7rem – 1.1rem)
                     const maxFreq = summary.top_themes[0].frequency;
-                    const minSize = 0.7;
-                    const maxSize = 1.1;
-                    const size =
-                      maxFreq > 1
-                        ? minSize + ((cluster.frequency - 1) / (maxFreq - 1)) * (maxSize - minSize)
-                        : maxSize;
+                    const size = maxFreq > 1
+                      ? 0.72 + ((cluster.frequency - 1) / (maxFreq - 1)) * 0.4
+                      : 1;
+                    const opacity = 0.45 + (cluster.frequency / maxFreq) * 0.5;
                     return (
                       <span
                         key={cluster.theme}
-                        className="px-3 py-1 font-fell italic"
-                        style={{
-                          fontSize: `${size}rem`,
-                          border: "1px solid rgba(200,169,110,0.25)",
-                          color: `rgba(232,213,183,${0.5 + (cluster.frequency / maxFreq) * 0.45})`,
-                          background: "rgba(200,169,110,0.04)",
-                        }}
+                        className="theme-chip"
+                        style={{ fontSize: `${size}rem`, color: `rgba(232,213,183,${opacity})` }}
                         title={`${cluster.frequency} session${cluster.frequency !== 1 ? "s" : ""}`}
                       >
                         {cluster.theme}
@@ -186,25 +205,13 @@ export default function ProfileClient() {
                 transition={{ delay: 0.35, duration: 0.7 }}
                 className="mb-12"
               >
-                <p
-                  className="font-cinzel text-xs tracking-widest uppercase mb-4"
-                  style={{ color: "rgba(200,169,110,0.5)" }}
-                >
-                  Nyx&rsquo;s Observations
-                </p>
+                <p className="label-overline mb-5">Nyx&rsquo;s Observations</p>
                 <InsightCards insights={data.insights} />
               </motion.div>
             )}
 
             {/* Divider */}
-            <div
-              className="mb-10"
-              style={{
-                height: "1px",
-                background:
-                  "linear-gradient(to right, transparent, rgba(200,169,110,0.2), transparent)",
-              }}
-            />
+            <div className="gold-divider mb-10" />
 
             {/* Session history */}
             <motion.div
@@ -212,12 +219,7 @@ export default function ProfileClient() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.45, duration: 0.7 }}
             >
-              <p
-                className="font-cinzel text-xs tracking-widest uppercase mb-6"
-                style={{ color: "rgba(200,169,110,0.5)" }}
-              >
-                Consultation History
-              </p>
+              <p className="label-overline mb-6">Consultation History</p>
 
               <div className="space-y-3">
                 {allSessions.map((session, i) => (
@@ -225,38 +227,35 @@ export default function ProfileClient() {
                     key={session.id}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.05 * i, duration: 0.4 }}
+                    transition={{ delay: 0.04 * i, duration: 0.4 }}
                     className="victorian-border p-5 cursor-pointer"
-                    onClick={() =>
-                      setExpanded(expanded === session.id ? null : session.id)
-                    }
+                    onClick={() => setExpanded(expanded === session.id ? null : session.id)}
                   >
-                    {/* Session header */}
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
                         <p
-                          className="font-cinzel text-xs tracking-widest uppercase mb-1"
-                          style={{ color: "rgba(200,169,110,0.45)" }}
+                          className="label-overline mb-1.5"
+                          style={{ color: "rgba(200,169,110,0.35)" }}
                         >
                           {formatDate(session.created_at)}
                         </p>
                         <p
                           className="font-fell truncate"
-                          style={{ color: "#E8D5B7" }}
+                          style={{ color: "var(--parchment)", fontSize: "0.95rem" }}
                         >
                           {session.books.map((b) => `"${b.title}"`).join(", ")}
                         </p>
-                        {/* Theme tags */}
                         {session.theme_tags.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
                             {session.theme_tags.map((tag) => (
                               <span
                                 key={tag}
-                                className="font-fell italic text-xs px-2 py-0.5"
+                                className="font-fell italic"
                                 style={{
-                                  border: "1px solid rgba(200,169,110,0.15)",
-                                  color: "rgba(200,169,110,0.5)",
-                                  fontSize: "0.7rem",
+                                  fontSize: "0.68rem",
+                                  padding: "0.15rem 0.55rem",
+                                  border: "1px solid rgba(200,169,110,0.12)",
+                                  color: "rgba(200,169,110,0.4)",
                                 }}
                               >
                                 {tag}
@@ -266,71 +265,62 @@ export default function ProfileClient() {
                         )}
                       </div>
                       <span
-                        className="font-fell italic text-xs mt-1 ml-3 flex-shrink-0"
-                        style={{ color: "rgba(200,169,110,0.4)" }}
+                        className="font-fell italic ml-3 flex-shrink-0"
+                        style={{ fontSize: "0.7rem", color: "rgba(200,169,110,0.35)", marginTop: 2 }}
                       >
                         {expanded === session.id ? "▲" : "▼"}
                       </span>
                     </div>
 
-                    {/* Expanded: top recommendation + all books */}
-                    {expanded === session.id && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        className="mt-4 pt-4 border-t border-gold/10"
-                      >
-                        {session.top_recommendation && (
-                          <div className="mb-4">
-                            <p
-                              className="font-cinzel text-xs tracking-widest uppercase mb-2"
-                              style={{ color: "rgba(200,169,110,0.4)" }}
-                            >
-                              Oracle&rsquo;s Choice
-                            </p>
-                            <p className="font-fell" style={{ color: "#E8D5B7" }}>
-                              {session.top_recommendation.title}
-                            </p>
-                            <p
-                              className="font-fell italic text-sm"
-                              style={{ color: "rgba(200,169,110,0.6)" }}
-                            >
-                              {session.top_recommendation.author}
-                            </p>
-                          </div>
-                        )}
-                        <div>
-                          <p
-                            className="font-cinzel text-xs tracking-widest uppercase mb-2"
-                            style={{ color: "rgba(200,169,110,0.4)" }}
-                          >
-                            Books Entered
-                          </p>
-                          <div className="space-y-1">
-                            {session.books.map((b, bi) => (
-                              <p
-                                key={bi}
-                                className="font-fell text-sm"
-                                style={{ color: "rgba(232,213,183,0.7)" }}
-                              >
-                                {b.title}
-                                <span
-                                  className="italic ml-1"
-                                  style={{ color: "rgba(200,169,110,0.5)" }}
-                                >
-                                  — {b.author}
-                                </span>
+                    <AnimatePresence>
+                      {expanded === session.id && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="mt-5 pt-5"
+                          style={{ borderTop: "1px solid rgba(200,169,110,0.08)" }}
+                        >
+                          {session.top_recommendation && (
+                            <div className="mb-5">
+                              <p className="label-overline mb-2" style={{ color: "rgba(200,169,110,0.35)" }}>
+                                Oracle&rsquo;s Choice
                               </p>
-                            ))}
+                              <p className="font-fell" style={{ color: "var(--parchment)", fontSize: "0.95rem" }}>
+                                {session.top_recommendation.title}
+                              </p>
+                              <p className="font-fell italic text-sm" style={{ color: "var(--gold-dim)" }}>
+                                {session.top_recommendation.author}
+                              </p>
+                            </div>
+                          )}
+                          <div>
+                            <p className="label-overline mb-2" style={{ color: "rgba(200,169,110,0.35)" }}>
+                              Books Entered
+                            </p>
+                            <div className="space-y-1">
+                              {session.books.map((b, bi) => (
+                                <p
+                                  key={bi}
+                                  className="font-fell"
+                                  style={{ fontSize: "0.88rem", color: "rgba(232,213,183,0.65)" }}
+                                >
+                                  {b.title}
+                                  <span className="italic" style={{ color: "var(--gold-dim)", marginLeft: 4 }}>
+                                    — {b.author}
+                                  </span>
+                                </p>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      </motion.div>
-                    )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 ))}
               </div>
 
-              {/* Load more */}
               {allSessions.length < totalSessions && (
                 <div className="mt-6 text-center">
                   <button
@@ -339,18 +329,17 @@ export default function ProfileClient() {
                     className="btn-ghost"
                     style={{ opacity: loadingMore ? 0.5 : 1 }}
                   >
-                    {loadingMore ? "Loading..." : "Load Earlier Consultations"}
+                    {loadingMore ? "Loading…" : "Load Earlier Consultations"}
                   </button>
                 </div>
               )}
             </motion.div>
 
-            {/* New consultation CTA */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
-              className="mt-12 text-center"
+              className="mt-14 text-center"
             >
               <Link href="/enter" className="btn-ghost">
                 Begin a New Consultation

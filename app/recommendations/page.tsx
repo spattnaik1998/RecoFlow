@@ -2,16 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import RecommendationReveal from "@/components/RecommendationReveal";
 import ExportPanel from "@/components/ExportPanel";
 import { SESSION_KEYS } from "@/types";
-import type { Recommendation } from "@/types";
+import type { Recommendation, MediaRecommendation, GetMediaRecommendationsResponse } from "@/types";
 
 export default function RecommendationsPage() {
   const router = useRouter();
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [podcasts, setPodcasts] = useState<MediaRecommendation[]>([]);
+  const [articles, setArticles] = useState<MediaRecommendation[]>([]);
+  const [podcastsOpen, setPodcastsOpen] = useState(true);
+  const [articlesOpen, setArticlesOpen] = useState(true);
   const [sessionId, setSessionId] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
 
@@ -21,6 +25,13 @@ export default function RecommendationsPage() {
     try {
       setRecommendations(JSON.parse(raw) as Recommendation[]);
       setSessionId(sessionStorage.getItem(SESSION_KEYS.SESSION_ID) ?? undefined);
+
+      const mediaRaw = sessionStorage.getItem(SESSION_KEYS.MEDIA_RECOMMENDATIONS);
+      if (mediaRaw) {
+        const mediaData = JSON.parse(mediaRaw) as GetMediaRecommendationsResponse;
+        setPodcasts(mediaData.podcasts ?? []);
+        setArticles(mediaData.articles ?? []);
+      }
     } catch {
       router.push("/enter");
     } finally {
@@ -73,6 +84,41 @@ export default function RecommendationsPage() {
           </motion.div>
         )}
 
+        {/* ── Cross-Media Panels ─────────────────────────────────── */}
+        {podcasts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 9, duration: 0.6 }}
+            className="mt-10"
+          >
+            <MediaPanel
+              title="Also Heard: Podcasts"
+              items={podcasts}
+              isOpen={podcastsOpen}
+              onToggle={() => setPodcastsOpen((v) => !v)}
+              durationKey="duration_estimate"
+            />
+          </motion.div>
+        )}
+
+        {articles.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: podcasts.length > 0 ? 9.4 : 9, duration: 0.6 }}
+            className="mt-6"
+          >
+            <MediaPanel
+              title="Also Read: Longform"
+              items={articles}
+              isOpen={articlesOpen}
+              onToggle={() => setArticlesOpen((v) => !v)}
+              durationKey="read_time_estimate"
+            />
+          </motion.div>
+        )}
+
         {/* Actions */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -89,6 +135,165 @@ export default function RecommendationsPage() {
           </Link>
         </motion.div>
       </div>
+    </div>
+  );
+}
+
+// ─── Media Panel ──────────────────────────────────────────────────────────────
+
+interface MediaPanelProps {
+  title: string;
+  items: MediaRecommendation[];
+  isOpen: boolean;
+  onToggle: () => void;
+  durationKey: "duration_estimate" | "read_time_estimate";
+}
+
+function MediaPanel({ title, items, isOpen, onToggle, durationKey }: MediaPanelProps) {
+  return (
+    <div
+      style={{
+        border: "1px solid rgba(99,135,255,0.10)",
+        borderRadius: "12px",
+        background: "var(--bg-surface)",
+        overflow: "hidden",
+      }}
+    >
+      {/* Panel header */}
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-5 py-4"
+        style={{
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          borderBottom: isOpen ? "1px solid rgba(99,135,255,0.08)" : "none",
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <span
+            className="text-xs font-medium uppercase tracking-widest"
+            style={{ color: "#A8BBFF", letterSpacing: "0.08em" }}
+          >
+            {title}
+          </span>
+          <span
+            className="text-xs px-1.5 py-0.5 rounded"
+            style={{ background: "rgba(99,135,255,0.08)", color: "var(--text-muted)" }}
+          >
+            {items.length}
+          </span>
+        </div>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          style={{
+            color: "var(--text-muted)",
+            transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.2s ease",
+          }}
+        >
+          <path
+            d="M2.5 5L7 9.5L11.5 5"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+
+      {/* Cards */}
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            key="content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="p-4 space-y-3">
+              {items.map((item, i) => (
+                <a
+                  key={`${item.title}-${i}`}
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                  style={{ textDecoration: "none" }}
+                >
+                  <div
+                    style={{
+                      background: "var(--bg-raised)",
+                      border: "1px solid rgba(99,135,255,0.08)",
+                      borderRadius: "10px",
+                      padding: "1rem 1.125rem",
+                      transition: "border-color 0.2s ease, background 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(99,135,255,0.22)";
+                      (e.currentTarget as HTMLDivElement).style.background = "var(--bg-overlay)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(99,135,255,0.08)";
+                      (e.currentTarget as HTMLDivElement).style.background = "var(--bg-raised)";
+                    }}
+                  >
+                    {/* Title row */}
+                    <div className="flex items-start justify-between gap-3 mb-1">
+                      <h4
+                        className="font-medium leading-snug text-sm"
+                        style={{ color: "var(--text-primary)" }}
+                      >
+                        {item.title}
+                      </h4>
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        style={{ color: "var(--text-muted)", flexShrink: 0, marginTop: "3px" }}
+                      >
+                        <path
+                          d="M2 10L10 2M10 2H5M10 2V7"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+
+                    {/* Source + duration row */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                        {item.source}
+                      </span>
+                      {item[durationKey] && (
+                        <>
+                          <span style={{ color: "rgba(99,135,255,0.25)", fontSize: "0.6rem" }}>•</span>
+                          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                            {item[durationKey]}
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Nyx rationale */}
+                    <p className="text-xs leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
+                      {item.nyx_rationale}
+                    </p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

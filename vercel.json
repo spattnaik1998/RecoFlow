@@ -6,6 +6,9 @@
     "app/api/get-recommendations/route.ts": {
       "maxDuration": 60
     },
+    "app/api/get-media-recommendations/route.ts": {
+      "maxDuration": 60
+    },
     "app/api/generate-questions/route.ts": {
       "maxDuration": 60
     },

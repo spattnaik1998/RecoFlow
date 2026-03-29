@@ -342,3 +342,36 @@ export async function generateMediaRecommendations(
     articles: (parsed.articles ?? []).slice(0, 3),
   };
 }
+
+// ─── Reading Portrait Generation ──────────────────────────────────────────────
+
+export async function generateReadingPortrait(
+  intellectualThemes: string[],
+  sessionSummaries: { date: string; books: string[]; topThemes: string[] }[]
+): Promise<string> {
+  const recentSessions = sessionSummaries.slice(-6);
+  const sessionContext = recentSessions
+    .map((s) => `${s.date}: ${s.books.join(", ")} [themes: ${s.topThemes.join(", ")}]`)
+    .join("\n");
+
+  const prompt = `You are writing a Reading Portrait for a specific reader based on their full reading history.
+
+THEIR ACCUMULATED INTELLECTUAL THEMES (most to least frequent):
+${intellectualThemes.join(", ")}
+
+THEIR RECENT SESSIONS:
+${sessionContext || "No sessions yet."}
+
+Write a single paragraph, in Nyx's voice — measured, evocative, specific. Name actual themes from their history. Describe the shape of their intellectual curiosity: what draws them, what tensions animate their reading, what they seem to be searching for. End with a single evocative sentence about where their reading appears to be heading next.
+
+Strict limit: 120 words. No preamble. Begin directly with your portrait of this reader.`;
+
+  const response = await anthropic.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 256,
+    system: NYX_SYSTEM_PROMPT,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  return response.content[0].type === "text" ? response.content[0].text.trim() : "";
+}

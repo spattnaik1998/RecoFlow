@@ -234,10 +234,13 @@ export default function LibraryClient() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="mt-8"
+            className="mt-8 flex flex-col sm:flex-row gap-3"
           >
             <Link href="/enter" className="btn-ghost">
               New session
+            </Link>
+            <Link href="/profile" className="btn-ghost">
+              My Reading DNA
             </Link>
           </motion.div>
         )}

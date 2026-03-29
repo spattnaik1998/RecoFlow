@@ -3,8 +3,20 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import InsightCards from "./InsightCards";
 import type { ProfileDashboardData, SessionSummaryRow } from "@/types";
+import type { PortraitResponse } from "@/app/api/profile/portrait/route";
+
+// Dynamic imports keep D3/Recharts out of the server bundle
+const ThemeConstellation = dynamic(() => import("@/components/ThemeConstellation"), {
+  ssr: false,
+  loading: () => <div style={{ height: 320, background: "#0A0E1A", borderRadius: 10 }} />,
+});
+const TemporalDriftMap = dynamic(() => import("@/components/TemporalDriftMap"), {
+  ssr: false,
+  loading: () => <div style={{ height: 280, background: "transparent" }} />,
+});
 
 export default function ProfileClient() {
   const [data, setData] = useState<ProfileDashboardData | null>(null);
@@ -14,6 +26,11 @@ export default function ProfileClient() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [allSessions, setAllSessions] = useState<SessionSummaryRow[]>([]);
   const [totalSessions, setTotalSessions] = useState(0);
+
+  // Reading DNA state
+  const [portrait, setPortrait] = useState<PortraitResponse | null>(null);
+  const [portraitLoading, setPortraitLoading] = useState(false);
+  const [filterTheme, setFilterTheme] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/profile")
@@ -26,6 +43,18 @@ export default function ProfileClient() {
       .catch(() => {/* silent */})
       .finally(() => setLoading(false));
   }, []);
+
+  // Fetch portrait + DNA sessions once profile is loaded and has sessions
+  useEffect(() => {
+    if (loading) return;
+    if (!data?.summary || data.summary.total_sessions === 0) return;
+    setPortraitLoading(true);
+    fetch("/api/profile/portrait")
+      .then((r) => r.json())
+      .then((d: PortraitResponse) => setPortrait(d))
+      .catch(() => {/* silent */})
+      .finally(() => setPortraitLoading(false));
+  }, [loading, data?.summary?.total_sessions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadMore() {
     if (loadingMore) return;
@@ -166,6 +195,81 @@ export default function ProfileClient() {
                     );
                   })}
                 </div>
+              </motion.div>
+            )}
+
+            {/* ── Reading DNA ─────────────────────────────────── */}
+            {(portraitLoading || portrait) && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.22, duration: 0.5 }}
+                className="mb-8"
+              >
+                {/* Section header */}
+                <div className="flex items-center gap-3 mb-5">
+                  <p className="text-xs font-medium uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+                    Reading DNA
+                  </p>
+                  <div style={{ flex: 1, height: 1, background: "rgba(99,135,255,0.08)" }} />
+                </div>
+
+                {/* 1. Reading Portrait */}
+                <div className="card p-5 mb-5">
+                  <p className="text-xs font-medium mb-3" style={{ color: "var(--text-muted)" }}>
+                    Nyx&rsquo;s portrait of you
+                  </p>
+                  {portraitLoading && !portrait?.portrait ? (
+                    <div className="flex items-center gap-2">
+                      <div className="spinner" style={{ width: 14, height: 14 }} />
+                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>Nyx is composing your portrait…</p>
+                    </div>
+                  ) : portrait?.portrait ? (
+                    <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)", fontStyle: "italic" }}>
+                      &ldquo;{portrait.portrait}&rdquo;
+                    </p>
+                  ) : (
+                    <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                      Portrait not yet available. Complete more sessions.
+                    </p>
+                  )}
+                </div>
+
+                {/* 2. Theme Constellation */}
+                {data?.summary?.top_themes && data.summary.top_themes.length > 0 && portrait?.dna_sessions && (
+                  <div className="mb-5">
+                    <p className="text-xs font-medium mb-3" style={{ color: "var(--text-muted)" }}>
+                      Theme constellation
+                    </p>
+                    <ThemeConstellation
+                      themes={data.summary.top_themes}
+                      sessions={portrait.dna_sessions}
+                      activeTheme={filterTheme}
+                      onThemeClick={setFilterTheme}
+                    />
+                  </div>
+                )}
+
+                {/* 3. Temporal Drift Map */}
+                {portrait?.dna_sessions && portrait.dna_sessions.length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+                        Temporal drift map
+                      </p>
+                      {filterTheme && (
+                        <span className="text-xs px-2 py-0.5 rounded"
+                          style={{ background: "rgba(200,169,110,0.12)", color: "#C8A96E", border: "1px solid rgba(200,169,110,0.25)" }}>
+                          Filtered: {filterTheme}
+                        </span>
+                      )}
+                    </div>
+                    <TemporalDriftMap
+                      sessions={portrait.dna_sessions}
+                      filterTheme={filterTheme}
+                    />
+                  </div>
+                )}
               </motion.div>
             )}
 

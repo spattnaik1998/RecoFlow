@@ -12,13 +12,16 @@
     "@anthropic-ai/sdk": "^0.39.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.49.1",
+    "d3": "^7.9.0",
     "framer-motion": "^12.4.7",
     "next": "^16.1.6",
     "openai": "^4.86.2",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
+    "@types/d3": "^7.4.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

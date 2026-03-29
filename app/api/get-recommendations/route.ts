@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json() as GetRecommendationsRequest;
-    const { intersection, brain_dump, session_id, media_answers } = body;
+    const { intersection, brain_dump, session_id, media_answers, override_prefs } = body;
 
     if (!intersection || !brain_dump) {
       return NextResponse.json(
@@ -24,10 +24,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Fetch user profile and preferences in parallel for personalization
+    // Fetch user profile (always) and preferences (skipped when override_prefs is true)
     const [{ data: profile }, userPreferences] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", user.id).single(),
-      getUserPreferences(user.id, supabase),
+      override_prefs ? Promise.resolve(undefined) : getUserPreferences(user.id, supabase),
     ]);
 
     // Generate recommendations (preference-aware, media-enriched)

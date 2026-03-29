@@ -121,6 +121,7 @@ export interface UserPreferences {
   blocked_titles: string[];
   blocked_themes: string[];
   preferred_themes: string[];
+  preferred_authors: string[];
   updated_at: string;
 }
 
@@ -134,6 +135,15 @@ export interface PreferencesPatchRequest {
   blocked_titles?: string[];
   blocked_themes?: string[];
   preferred_themes?: string[];
+  preferred_authors?: string[];
+}
+
+export interface NyxPreferenceSuggestion {
+  reason_code: string;
+  message: string;
+  action: "block_theme" | "prefer_author";
+  payload: string;     // empty = informational only, no "Yes, adjust" action
+  signal_count: number;
 }
 
 // ─── Session Types ────────────────────────────────────────────────────────────
@@ -181,6 +191,7 @@ export interface GetRecommendationsRequest {
   session_id: string;
   user_profile?: UserProfile;
   media_answers?: MediaConsumptionAnswer[];
+  override_prefs?: boolean;
 }
 
 export interface GetRecommendationsResponse {
@@ -361,6 +372,8 @@ export const SESSION_KEYS = {
   MEDIA_ANSWERS: "rf_media_answers",
   RECOMMENDATIONS: "rf_recommendations",
   MEDIA_RECOMMENDATIONS: "rf_media_recommendations",
+  OVERRIDE_PREFS: "rf_override_prefs",
+  PREF_SUGGESTIONS: "rf_pref_suggestions",
 } as const;
 
 export type SessionKey = (typeof SESSION_KEYS)[keyof typeof SESSION_KEYS];

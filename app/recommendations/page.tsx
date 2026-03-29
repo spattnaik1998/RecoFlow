@@ -7,7 +7,7 @@ import Link from "next/link";
 import RecommendationReveal from "@/components/RecommendationReveal";
 import ExportPanel from "@/components/ExportPanel";
 import { SESSION_KEYS } from "@/types";
-import type { Recommendation, MediaRecommendation, GetMediaRecommendationsResponse } from "@/types";
+import type { Recommendation, MediaRecommendation, GetMediaRecommendationsResponse, NyxPreferenceSuggestion } from "@/types";
 
 export default function RecommendationsPage() {
   const router = useRouter();
@@ -18,6 +18,8 @@ export default function RecommendationsPage() {
   const [articlesOpen, setArticlesOpen] = useState(true);
   const [sessionId, setSessionId] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
+  const [prefSuggestions, setPrefSuggestions] = useState<NyxPreferenceSuggestion[]>([]);
+  const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const raw = sessionStorage.getItem(SESSION_KEYS.RECOMMENDATIONS);
@@ -37,6 +39,16 @@ export default function RecommendationsPage() {
     } finally {
       setLoading(false);
     }
+
+    // Fire-and-forget learn call to surface preference suggestions
+    fetch("/api/preferences/learn")
+      .then((r) => r.json())
+      .then((d: { suggestions?: NyxPreferenceSuggestion[] }) => {
+        if (d.suggestions && d.suggestions.length > 0) {
+          setPrefSuggestions(d.suggestions);
+        }
+      })
+      .catch(() => {/* non-fatal */});
   }, [router]);
 
   if (loading) {
@@ -83,6 +95,46 @@ export default function RecommendationsPage() {
             <ExportPanel sessionId={sessionId} />
           </motion.div>
         )}
+
+        {/* ── Preference Suggestions ─────────────────────────────── */}
+        <AnimatePresence>
+          {prefSuggestions
+            .filter((s) => !dismissedSuggestions.has(s.reason_code))
+            .slice(0, 1) // show one at a time
+            .map((suggestion) => (
+              <motion.div
+                key={suggestion.reason_code}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ delay: 9.5, duration: 0.5 }}
+                className="mt-8"
+              >
+                <PreferenceSuggestionCard
+                  suggestion={suggestion}
+                  onAccept={async () => {
+                    if (suggestion.action === "block_theme" && suggestion.payload) {
+                      await fetch("/api/preferences", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ blocked_themes: [suggestion.payload] }),
+                      }).catch(() => {/* non-fatal */});
+                    } else if (suggestion.action === "prefer_author" && suggestion.payload) {
+                      await fetch("/api/preferences", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ preferred_authors: [suggestion.payload] }),
+                      }).catch(() => {/* non-fatal */});
+                    }
+                    setDismissedSuggestions((prev) => new Set([...prev, suggestion.reason_code]));
+                  }}
+                  onDismiss={() =>
+                    setDismissedSuggestions((prev) => new Set([...prev, suggestion.reason_code]))
+                  }
+                />
+              </motion.div>
+            ))}
+        </AnimatePresence>
 
         {/* ── Cross-Media Panels ─────────────────────────────────── */}
         {podcasts.length > 0 && (
@@ -134,6 +186,86 @@ export default function RecommendationsPage() {
             View history
           </Link>
         </motion.div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Preference Suggestion Card ──────────────────────────────────────────────
+
+interface PreferenceSuggestionCardProps {
+  suggestion: NyxPreferenceSuggestion;
+  onAccept: () => Promise<void>;
+  onDismiss: () => void;
+}
+
+function PreferenceSuggestionCard({ suggestion, onAccept, onDismiss }: PreferenceSuggestionCardProps) {
+  const [accepting, setAccepting] = useState(false);
+
+  const isActionable = suggestion.payload.length > 0;
+
+  async function handleAccept() {
+    setAccepting(true);
+    await onAccept();
+    setAccepting(false);
+  }
+
+  return (
+    <div
+      style={{
+        border: "1px solid rgba(200,169,110,0.20)",
+        borderRadius: "12px",
+        background: "rgba(200,169,110,0.04)",
+        padding: "1.25rem 1.5rem",
+      }}
+    >
+      <div className="flex items-start gap-3 mb-4">
+        {/* Nyx glyph */}
+        <div
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: "50%",
+            background: "rgba(200,169,110,0.12)",
+            border: "1px solid rgba(200,169,110,0.25)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            marginTop: 2,
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <circle cx="6" cy="6" r="4" stroke="#C8A96E" strokeWidth="1.2"/>
+            <circle cx="6" cy="6" r="1.5" fill="#C8A96E"/>
+          </svg>
+        </div>
+        <p
+          className="text-sm leading-relaxed"
+          style={{ color: "var(--text-secondary)", fontStyle: "italic" }}
+        >
+          {suggestion.message}
+        </p>
+      </div>
+
+      <div className="flex gap-2">
+        {isActionable && (
+          <button
+            onClick={handleAccept}
+            disabled={accepting}
+            className="btn-primary"
+            style={{ fontSize: "0.75rem", padding: "0.4rem 1rem", opacity: accepting ? 0.6 : 1 }}
+          >
+            {accepting ? "Adjusting…" : "Yes, adjust"}
+          </button>
+        )}
+        <button
+          onClick={onDismiss}
+          className="btn-ghost"
+          style={{ fontSize: "0.75rem", padding: "0.4rem 1rem" }}
+        >
+          Not now
+        </button>
       </div>
     </div>
   );

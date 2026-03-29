@@ -275,6 +275,7 @@ export default function SessionPage() {
     setPhase("getting_recommendations");
     const sessionId = sessionStorage.getItem(SESSION_KEYS.SESSION_ID);
     const hasActiveMedia = finalMediaAnswers.some((a) => !a.skipped && a.answer.trim().length > 0);
+    const overridePrefs = sessionStorage.getItem(SESSION_KEYS.OVERRIDE_PREFS) === "true";
 
     try {
       const bookFetch = fetch("/api/get-recommendations", {
@@ -285,6 +286,7 @@ export default function SessionPage() {
           brain_dump: answers,
           session_id: sessionId,
           ...(hasActiveMedia ? { media_answers: finalMediaAnswers } : {}),
+          ...(overridePrefs ? { override_prefs: true } : {}),
         }),
       });
 
@@ -317,6 +319,12 @@ export default function SessionPage() {
       } else {
         sessionStorage.removeItem(SESSION_KEYS.MEDIA_RECOMMENDATIONS);
       }
+
+      // Clear override flag now that it's been consumed
+      sessionStorage.removeItem(SESSION_KEYS.OVERRIDE_PREFS);
+
+      // Fire-and-forget: update preference signals after session completes
+      fetch("/api/preferences/learn").catch(() => {/* non-fatal */});
 
       setPhase("done");
       await delay(800);

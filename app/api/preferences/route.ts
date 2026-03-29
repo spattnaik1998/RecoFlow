@@ -25,6 +25,7 @@ export async function GET() {
         blocked_titles: [],
         blocked_themes: [],
         preferred_themes: [],
+        preferred_authors: [],
         updated_at: new Date().toISOString(),
       }
     );
@@ -58,10 +59,16 @@ export async function PATCH(req: NextRequest) {
       blocked_titles: existing?.blocked_titles ?? [],
       blocked_themes: existing?.blocked_themes ?? [],
       preferred_themes: existing?.preferred_themes ?? [],
+      preferred_authors: existing?.preferred_authors ?? [],
       ...(body.blocked_authors !== undefined && { blocked_authors: body.blocked_authors }),
       ...(body.blocked_titles !== undefined && { blocked_titles: body.blocked_titles }),
       ...(body.blocked_themes !== undefined && { blocked_themes: body.blocked_themes }),
       ...(body.preferred_themes !== undefined && { preferred_themes: body.preferred_themes }),
+      ...(body.preferred_authors !== undefined && {
+        preferred_authors: Array.from(
+          new Set([...(existing?.preferred_authors ?? []), ...body.preferred_authors])
+        ).slice(0, 20),
+      }),
       updated_at: new Date().toISOString(),
     };
 

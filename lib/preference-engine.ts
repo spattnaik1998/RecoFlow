@@ -6,6 +6,7 @@ const EMPTY_PREFERENCES: Omit<UserPreferences, "user_id" | "updated_at"> = {
   blocked_titles: [],
   blocked_themes: [],
   preferred_themes: [],
+  preferred_authors: [],
 };
 
 export async function getUserPreferences(
@@ -80,6 +81,11 @@ export function buildPreferenceContext(preferences: UserPreferences): string {
   if (preferences.preferred_themes.length > 0) {
     parts.push(
       `The reader has shown affinity for: ${preferences.preferred_themes.join(", ")}. Weight toward these when quality candidates exist.`
+    );
+  }
+  if (preferences.preferred_authors && preferences.preferred_authors.length > 0) {
+    parts.push(
+      `Authors this reader has repeatedly enjoyed: ${preferences.preferred_authors.join(", ")}. Favour similar voices.`
     );
   }
 

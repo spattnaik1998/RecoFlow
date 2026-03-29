@@ -2,6 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import type {
   ThematicIntersection,
   BrainDumpAnswer,
+  MediaConsumptionAnswer,
+  MediaRecommendation,
   UserProfile,
   Recommendation,
 } from "@/types";
@@ -122,7 +124,8 @@ export function buildRecommendationPrompt(
   brainDump: BrainDumpAnswer[],
   searchResults: string,
   userProfile?: UserProfile,
-  preferenceContext?: string
+  preferenceContext?: string,
+  mediaAnswers?: MediaConsumptionAnswer[]
 ): string {
   const qaSection = brainDump
     .map((qa) => `Q (${qa.category}): ${qa.question}\nA: ${qa.answer}`)
@@ -131,6 +134,14 @@ export function buildRecommendationPrompt(
   const profileContext =
     userProfile?.intellectual_themes && userProfile.intellectual_themes.length > 0
       ? `\n\nThis reader's long-term intellectual themes: ${userProfile.intellectual_themes.join(", ")}`
+      : "";
+
+  const activeMediaAnswers = mediaAnswers?.filter((m) => !m.skipped && m.answer.trim().length > 0);
+  const mediaContext =
+    activeMediaAnswers && activeMediaAnswers.length > 0
+      ? `\n\nThe reader is also consuming the following non-book media:\n\n${activeMediaAnswers
+          .map((m) => `${m.category}: ${m.answer}`)
+          .join("\n\n")}\n\nLet this inform the texture and urgency of your recommendations, without forcing explicit thematic alignment.`
       : "";
 
   return `You are recommending books for a reader who is simultaneously reading: ${intersection.books.map((b) => `"${b.title}" by ${b.author}`).join(", ")}.
@@ -143,7 +154,7 @@ SHARED CONFLUENCES: ${intersection.intersection.confluences.join("; ")}
 TENSIONS: ${intersection.intersection.tensions.join("; ")}
 
 BRAIN DUMP (reader's own words):
-${qaSection}${profileContext}${preferenceContext ?? ""}
+${qaSection}${profileContext}${preferenceContext ?? ""}${mediaContext}
 
 SEARCH RESULTS FOR CANDIDATE BOOKS:
 ${searchResults}
@@ -225,14 +236,16 @@ export async function generateRecommendations(
   brainDump: BrainDumpAnswer[],
   searchResults: string,
   userProfile?: UserProfile,
-  preferenceContext?: string
+  preferenceContext?: string,
+  mediaAnswers?: MediaConsumptionAnswer[]
 ): Promise<Recommendation[]> {
   const prompt = buildRecommendationPrompt(
     intersection,
     brainDump,
     searchResults,
     userProfile,
-    preferenceContext
+    preferenceContext,
+    mediaAnswers
   );
 
   const response = await anthropic.messages.create({
@@ -245,4 +258,87 @@ export async function generateRecommendations(
   const text = response.content[0].type === "text" ? response.content[0].text : "";
   const parsed = extractJSON<{ recommendations: Recommendation[] }>(text);
   return parsed.recommendations;
+}
+
+// ─── Media Recommendation Generation ─────────────────────────────────────────
+
+export function buildMediaRecommendationPrompt(
+  intersection: ThematicIntersection,
+  mediaAnswers: MediaConsumptionAnswer[],
+  searchResults: { podcastResults: string; articleResults: string; newsletterResults: string }
+): string {
+  const activeAnswers = mediaAnswers.filter((m) => !m.skipped && m.answer.trim().length > 0);
+  const mediaContext = activeAnswers
+    .map((m) => `${m.category}: ${m.answer}`)
+    .join("\n\n");
+
+  return `You are recommending podcasts and longform articles for a reader whose current intellectual territory is:
+
+${intersection.intersection.intellectual_territory}
+
+CONFLUENCES IN THEIR READING: ${intersection.intersection.confluences.join("; ")}
+
+WHAT THEY TOLD YOU ABOUT THEIR MEDIA DIET:
+${mediaContext}
+
+PODCAST SEARCH RESULTS:
+${searchResults.podcastResults}
+
+ARTICLE / ESSAY SEARCH RESULTS:
+${searchResults.articleResults}
+
+NEWSLETTER / SUBSTACK SEARCH RESULTS:
+${searchResults.newsletterResults}
+
+Select up to 3 podcast episodes or series and up to 3 longform articles or essays from the search results above. Choose only items that genuinely appear in the search results — do not invent titles or URLs. Prefer items with real, working URLs from the search results.
+
+For each item write one sentence of rationale in Nyx's voice: measured, evocative, precise. Not a summary — a reason this item is right for this reader at this moment.
+
+For podcasts estimate a plausible listening duration (e.g. "~45 min", "~1 hr"). For articles estimate a reading time (e.g. "~8 min read", "~15 min read").
+
+Output ONLY valid JSON:
+{
+  "podcasts": [
+    {
+      "title": "Episode or series title",
+      "source": "Podcast show name",
+      "url": "exact URL from search results",
+      "duration_estimate": "~45 min",
+      "nyx_rationale": "One sentence in Nyx's voice."
+    }
+  ],
+  "articles": [
+    {
+      "title": "Article title",
+      "source": "Publication name",
+      "url": "exact URL from search results",
+      "read_time_estimate": "~12 min read",
+      "nyx_rationale": "One sentence in Nyx's voice."
+    }
+  ]
+}
+
+If no suitable podcasts appear in the results, return an empty podcasts array. Same for articles. Never fabricate URLs.`;
+}
+
+export async function generateMediaRecommendations(
+  intersection: ThematicIntersection,
+  mediaAnswers: MediaConsumptionAnswer[],
+  searchResults: { podcastResults: string; articleResults: string; newsletterResults: string }
+): Promise<{ podcasts: MediaRecommendation[]; articles: MediaRecommendation[] }> {
+  const prompt = buildMediaRecommendationPrompt(intersection, mediaAnswers, searchResults);
+
+  const response = await anthropic.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 2048,
+    system: NYX_SYSTEM_PROMPT,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const text = response.content[0].type === "text" ? response.content[0].text : "";
+  const parsed = extractJSON<{ podcasts: MediaRecommendation[]; articles: MediaRecommendation[] }>(text);
+  return {
+    podcasts: (parsed.podcasts ?? []).slice(0, 3),
+    articles: (parsed.articles ?? []).slice(0, 3),
+  };
 }

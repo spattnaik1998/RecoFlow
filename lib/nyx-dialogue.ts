@@ -81,6 +81,32 @@ export const NYX_DIALOGUE = {
   loading_recommendations: "The oracle deliberates...",
 };
 
+// ─── Media Consumption Layer Dialogue ────────────────────────────────────────
+// Exact strings from Product Spec v2.0 Appendix — do not alter.
+
+export const MEDIA = {
+  MEDIA_INTRO:
+    "You have shown me the territory of your inner life. But I sense there are other voices — not on the page, yet still whispering. Tell me what else is feeding the hunger.",
+
+  MEDIA_PODCAST_Q:
+    "Beyond the page — are there voices in your ear? Name a podcast or conversation that has been stirring your thinking of late.",
+
+  MEDIA_ARTICLE_Q:
+    "And in the margins of the internet — what longform essays or newsletters have you been folding into your thinking?",
+
+  MEDIA_SYNTHESIS_Q:
+    "Do these other voices harmonise with your books, or do they pull against them? Where is the friction?",
+
+  MEDIA_PREFERENCE_Q:
+    "When you reach for a podcast rather than a book, what draws you there? The conversation format, the density of ideas, the voices themselves?",
+
+  MEDIA_SKIP:
+    "Very well. I shall work only with what your books have told me.",
+
+  MEDIA_COMPLETE:
+    "Good. I have enough now. Let me descend into the stacks.",
+};
+
 // ─── Dynamic Dialogue Builders ───────────────────────────────────────────────
 
 export function nyxGreetReturning(displayName: string | null): string {

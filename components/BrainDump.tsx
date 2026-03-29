@@ -8,9 +8,10 @@ import type { NyxQuestion, BrainDumpAnswer } from "@/types";
 interface BrainDumpProps {
   questions: NyxQuestion[];
   onComplete: (answers: BrainDumpAnswer[]) => void;
+  isSkippable?: boolean;
 }
 
-export default function BrainDump({ questions, onComplete }: BrainDumpProps) {
+export default function BrainDump({ questions, onComplete, isSkippable }: BrainDumpProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<BrainDumpAnswer[]>([]);
   const [currentAnswer, setCurrentAnswer] = useState("");
@@ -41,9 +42,32 @@ export default function BrainDump({ questions, onComplete }: BrainDumpProps) {
     }
   }
 
+  function handleSkip() {
+    const skippedAnswer: BrainDumpAnswer = {
+      question: currentQuestion.question,
+      answer: "",
+      category: currentQuestion.category,
+    };
+
+    const updatedAnswers = [...answers, skippedAnswer];
+    setAnswers(updatedAnswers);
+    setCurrentAnswer("");
+
+    if (isLast) {
+      setSubmitting(true);
+      onComplete(updatedAnswers);
+    } else {
+      setCurrentIndex((i) => i + 1);
+    }
+  }
+
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       handleNext();
+    }
+    if (e.key === "Tab" && isSkippable) {
+      e.preventDefault();
+      handleSkip();
     }
   }
 
@@ -100,20 +124,31 @@ export default function BrainDump({ questions, onComplete }: BrainDumpProps) {
             />
             <div className="flex items-center justify-between mt-3">
               <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                Ctrl+Enter to continue
+                {isSkippable ? "Ctrl+Enter to answer / Tab to skip" : "Ctrl+Enter to continue"}
               </span>
-              <button
-                className="btn-primary"
-                onClick={handleNext}
-                disabled={!currentAnswer.trim() || submitting}
-              >
-                {submitting ? (
-                  <span className="flex items-center gap-2">
-                    <span className="spinner" style={{ width: 14, height: 14 }} />
-                    Generating…
-                  </span>
-                ) : isLast ? "Get recommendations →" : "Next →"}
-              </button>
+              <div className="flex items-center gap-2">
+                {isSkippable && (
+                  <button
+                    className="btn-ghost text-xs"
+                    onClick={handleSkip}
+                    disabled={submitting}
+                  >
+                    Skip
+                  </button>
+                )}
+                <button
+                  className="btn-primary"
+                  onClick={handleNext}
+                  disabled={!currentAnswer.trim() || submitting}
+                >
+                  {submitting ? (
+                    <span className="flex items-center gap-2">
+                      <span className="spinner" style={{ width: 14, height: 14 }} />
+                      Generating…
+                    </span>
+                  ) : isLast ? "Get recommendations →" : "Next →"}
+                </button>
+              </div>
             </div>
           </div>
         </motion.div>

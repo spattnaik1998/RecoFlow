@@ -4,6 +4,7 @@ import { applyPreferenceFilter, buildPreferenceContext } from "./preference-engi
 import type {
   ThematicIntersection,
   BrainDumpAnswer,
+  MediaConsumptionAnswer,
   UserProfile,
   UserPreferences,
   Recommendation,
@@ -13,7 +14,8 @@ export async function getRecommendations(
   intersection: ThematicIntersection,
   brainDump: BrainDumpAnswer[],
   userProfile?: UserProfile,
-  userPreferences?: UserPreferences
+  userPreferences?: UserPreferences,
+  mediaAnswers?: MediaConsumptionAnswer[]
 ): Promise<Recommendation[]> {
   // Step 1: Search for candidate books at the intellectual intersection
   const themes = intersection.intersection.confluences;
@@ -46,7 +48,8 @@ export async function getRecommendations(
     brainDump,
     searchResults,
     userProfile,
-    preferenceContext
+    preferenceContext,
+    mediaAnswers
   );
 
   // Ensure we have exactly 5, sorted by rank

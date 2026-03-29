@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { getRecommendations } from "@/lib/recommendation-engine";
 import { getUserPreferences } from "@/lib/preference-engine";
-import type { GetRecommendationsRequest } from "@/types";
+import type { GetRecommendationsRequest, MediaConsumptionAnswer } from "@/types";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json() as GetRecommendationsRequest;
-    const { intersection, brain_dump, session_id } = body;
+    const { intersection, brain_dump, session_id, media_answers } = body;
 
     if (!intersection || !brain_dump) {
       return NextResponse.json(
@@ -30,12 +30,13 @@ export async function POST(req: NextRequest) {
       getUserPreferences(user.id, supabase),
     ]);
 
-    // Generate recommendations (preference-aware)
+    // Generate recommendations (preference-aware, media-enriched)
     const recommendations = await getRecommendations(
       intersection,
       brain_dump,
       profile ?? undefined,
-      userPreferences
+      userPreferences,
+      media_answers as MediaConsumptionAnswer[] | undefined
     );
 
     // Persist recommendations and fetch back with DB-assigned ids
@@ -66,10 +67,13 @@ export async function POST(req: NextRequest) {
       return row ? { ...rec, id: row.id as string } : rec;
     });
 
-    // Update session status to completed
+    // Update session status to completed; persist media context if present
     await serviceClient
       .from("reading_sessions")
-      .update({ status: "completed" })
+      .update({
+        status: "completed",
+        ...(media_answers ? { media_context: media_answers } : {}),
+      })
       .eq("id", session_id);
 
     // Update user profile with new themes

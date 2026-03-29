@@ -48,6 +48,41 @@ export interface BrainDumpAnswer {
   category: QuestionCategory;
 }
 
+// ─── Media Consumption Layer ──────────────────────────────────────────────────
+
+export type MediaCategory =
+  | "media_audio"       // podcasts
+  | "media_text"        // articles, newsletters, essays
+  | "media_synthesis"   // relationship between media types
+  | "media_preference"; // format / medium preference signal
+
+export interface MediaConsumptionAnswer {
+  question: string;
+  answer: string;   // empty string if skipped
+  category: MediaCategory;
+  skipped: boolean;
+}
+
+export interface MediaRecommendation {
+  title: string;
+  source: string;           // podcast show name or publication
+  url: string;
+  duration_estimate?: string;   // e.g. "~45 min"   (podcasts)
+  read_time_estimate?: string;  // e.g. "~12 min read" (articles)
+  nyx_rationale: string;        // one sentence in Nyx's voice
+}
+
+export interface GetMediaRecommendationsRequest {
+  intersection: ThematicIntersection;
+  media_answers: MediaConsumptionAnswer[];
+  session_id: string;
+}
+
+export interface GetMediaRecommendationsResponse {
+  podcasts: MediaRecommendation[];   // 0–3
+  articles: MediaRecommendation[];   // 0–3
+}
+
 // ─── Recommendations ─────────────────────────────────────────────────────────
 
 export interface Recommendation {
@@ -145,6 +180,7 @@ export interface GetRecommendationsRequest {
   brain_dump: BrainDumpAnswer[];
   session_id: string;
   user_profile?: UserProfile;
+  media_answers?: MediaConsumptionAnswer[];
 }
 
 export interface GetRecommendationsResponse {
@@ -322,7 +358,9 @@ export const SESSION_KEYS = {
   INTERSECTION: "rf_intersection",
   QUESTIONS: "rf_questions",
   ANSWERS: "rf_answers",
+  MEDIA_ANSWERS: "rf_media_answers",
   RECOMMENDATIONS: "rf_recommendations",
+  MEDIA_RECOMMENDATIONS: "rf_media_recommendations",
 } as const;
 
 export type SessionKey = (typeof SESSION_KEYS)[keyof typeof SESSION_KEYS];

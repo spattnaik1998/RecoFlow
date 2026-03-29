@@ -5,9 +5,16 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Nyx from "@/components/Nyx";
 import BrainDump from "@/components/BrainDump";
-import { NYX_DIALOGUE, nyxAnalysisResult } from "@/lib/nyx-dialogue";
+import { NYX_DIALOGUE, MEDIA, nyxAnalysisResult } from "@/lib/nyx-dialogue";
 import { SESSION_KEYS } from "@/types";
-import type { ThematicIntersection, NyxQuestion, BrainDumpAnswer, Book } from "@/types";
+import type {
+  ThematicIntersection,
+  NyxQuestion,
+  BrainDumpAnswer,
+  MediaConsumptionAnswer,
+  MediaCategory,
+  Book,
+} from "@/types";
 
 type Phase =
   | "loading_books"
@@ -15,6 +22,10 @@ type Phase =
   | "analysis_done"
   | "generating_questions"
   | "brain_dump"
+  | "media_intro"
+  | "media_phase"
+  | "media_skip"
+  | "media_complete"
   | "getting_recommendations"
   | "done"
   | "error";
@@ -25,7 +36,31 @@ const ANALYSIS_STEPS = [
   NYX_DIALOGUE.analysis_step3,
 ];
 
-const PHASES = ["Books", "Analyze", "Reflect", "Discover"];
+const PHASES = ["Books", "Analyze", "Reflect", "Media", "Discover"];
+
+// ─── Media question definitions ───────────────────────────────────────────────
+
+interface MediaQuestion {
+  id: string;
+  question: string;
+  category: MediaCategory;
+  skipLabel: string;
+}
+
+const ALWAYS_SHOWN_MEDIA_QUESTIONS: MediaQuestion[] = [
+  {
+    id: "media_audio",
+    question: MEDIA.MEDIA_PODCAST_Q,
+    category: "media_audio",
+    skipLabel: "No podcasts presently",
+  },
+  {
+    id: "media_text",
+    question: MEDIA.MEDIA_ARTICLE_Q,
+    category: "media_text",
+    skipLabel: "Nothing comes to mind",
+  },
+];
 
 export default function SessionPage() {
   const router = useRouter();
@@ -36,10 +71,18 @@ export default function SessionPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const initialized = useRef(false);
 
+  // Media phase state
+  const [mediaQuestions, setMediaQuestions] = useState<MediaQuestion[]>(ALWAYS_SHOWN_MEDIA_QUESTIONS);
+  const [mediaCurrentIndex, setMediaCurrentIndex] = useState(0);
+  const [mediaAnswers, setMediaAnswers] = useState<MediaConsumptionAnswer[]>([]);
+  const [mediaCurrentAnswer, setMediaCurrentAnswer] = useState("");
+  const [brainDumpAnswers, setBrainDumpAnswers] = useState<BrainDumpAnswer[]>([]);
+
   const activePhaseIndex = (() => {
     if (phase === "loading_books" || phase === "analysis_in_progress" || phase === "analysis_done") return 1;
     if (phase === "generating_questions" || phase === "brain_dump") return 2;
-    return 3;
+    if (phase === "media_intro" || phase === "media_phase" || phase === "media_skip" || phase === "media_complete") return 3;
+    return 4;
   })();
 
   useEffect(() => {
@@ -145,16 +188,119 @@ export default function SessionPage() {
 
   async function handleBrainDumpComplete(answers: BrainDumpAnswer[]) {
     sessionStorage.setItem(SESSION_KEYS.ANSWERS, JSON.stringify(answers));
-    setPhase("getting_recommendations");
+    setBrainDumpAnswers(answers);
+    // Reset media phase state for this session
+    setMediaQuestions(ALWAYS_SHOWN_MEDIA_QUESTIONS);
+    setMediaCurrentIndex(0);
+    setMediaAnswers([]);
+    setMediaCurrentAnswer("");
+    setPhase("media_intro");
+    await delay(2200);
+    setPhase("media_phase");
+  }
 
+  function handleMediaAnswer(answer: string, skipped: boolean) {
+    const currentQ = mediaQuestions[mediaCurrentIndex];
+    const newAnswer: MediaConsumptionAnswer = {
+      question: currentQ.question,
+      answer: skipped ? "" : answer.trim(),
+      category: currentQ.category,
+      skipped,
+    };
+
+    const updatedAnswers = [...mediaAnswers, newAnswer];
+    setMediaAnswers(updatedAnswers);
+    setMediaCurrentAnswer("");
+
+    // Determine if conditional questions should be added after Q2
+    let updatedQuestions = mediaQuestions;
+    const isQ2 = mediaCurrentIndex === 1;
+    if (isQ2) {
+      const q1Answer = updatedAnswers.find((a) => a.category === "media_audio");
+      const q2Answer = updatedAnswers.find((a) => a.category === "media_text");
+      const q1Active = q1Answer && !q1Answer.skipped && q1Answer.answer.length > 20;
+      const q2Active = q2Answer && !q2Answer.skipped && q2Answer.answer.length > 20;
+      const q1Answered = q1Answer && !q1Answer.skipped;
+
+      const extras: MediaQuestion[] = [];
+      if (q1Active && q2Active) {
+        extras.push({
+          id: "media_synthesis",
+          question: MEDIA.MEDIA_SYNTHESIS_Q,
+          category: "media_synthesis",
+          skipLabel: "Skip",
+        });
+      }
+      if (q1Answered) {
+        extras.push({
+          id: "media_preference",
+          question: MEDIA.MEDIA_PREFERENCE_Q,
+          category: "media_preference",
+          skipLabel: "Skip",
+        });
+      }
+      if (extras.length > 0) {
+        updatedQuestions = [...mediaQuestions, ...extras];
+        setMediaQuestions(updatedQuestions);
+      }
+    }
+
+    const isLast = mediaCurrentIndex === updatedQuestions.length - 1;
+    if (isLast) {
+      handleMediaComplete(updatedAnswers);
+    } else {
+      setMediaCurrentIndex((i) => i + 1);
+    }
+  }
+
+  async function handleMediaComplete(finalAnswers: MediaConsumptionAnswer[]) {
+    sessionStorage.setItem(SESSION_KEYS.MEDIA_ANSWERS, JSON.stringify(finalAnswers));
+
+    const allSkipped = finalAnswers.every((a) => a.skipped);
+    if (allSkipped) {
+      setPhase("media_skip");
+      await delay(2200);
+    } else {
+      setPhase("media_complete");
+      await delay(2200);
+    }
+
+    await fetchRecommendations(brainDumpAnswers, finalAnswers);
+  }
+
+  async function fetchRecommendations(
+    answers: BrainDumpAnswer[],
+    finalMediaAnswers: MediaConsumptionAnswer[]
+  ) {
+    setPhase("getting_recommendations");
     const sessionId = sessionStorage.getItem(SESSION_KEYS.SESSION_ID);
+    const hasActiveMedia = finalMediaAnswers.some((a) => !a.skipped && a.answer.trim().length > 0);
 
     try {
-      const recRes = await fetch("/api/get-recommendations", {
+      const bookFetch = fetch("/api/get-recommendations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ intersection, brain_dump: answers, session_id: sessionId }),
+        body: JSON.stringify({
+          intersection,
+          brain_dump: answers,
+          session_id: sessionId,
+          ...(hasActiveMedia ? { media_answers: finalMediaAnswers } : {}),
+        }),
       });
+
+      const mediaFetch = hasActiveMedia
+        ? fetch("/api/get-media-recommendations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              intersection,
+              media_answers: finalMediaAnswers,
+              session_id: sessionId,
+            }),
+          })
+        : Promise.resolve(null);
+
+      const [recRes, mediaRes] = await Promise.all([bookFetch, mediaFetch]);
 
       if (!recRes.ok) {
         const err = await recRes.json();
@@ -163,8 +309,16 @@ export default function SessionPage() {
 
       const { recommendations } = await recRes.json();
       sessionStorage.setItem(SESSION_KEYS.RECOMMENDATIONS, JSON.stringify(recommendations));
-      setPhase("done");
 
+      // Media recs — stored separately; failure is non-fatal
+      if (mediaRes && mediaRes.ok) {
+        const mediaData = await mediaRes.json();
+        sessionStorage.setItem(SESSION_KEYS.MEDIA_RECOMMENDATIONS, JSON.stringify(mediaData));
+      } else {
+        sessionStorage.removeItem(SESSION_KEYS.MEDIA_RECOMMENDATIONS);
+      }
+
+      setPhase("done");
       await delay(800);
       router.push("/recommendations");
     } catch (err) {
@@ -278,6 +432,111 @@ export default function SessionPage() {
                 </p>
               </div>
               <BrainDump questions={questions} onComplete={handleBrainDumpComplete} />
+            </motion.div>
+          )}
+
+          {/* Media intro */}
+          {phase === "media_intro" && (
+            <motion.div
+              key="media-intro"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
+              <Nyx dialogue={MEDIA.MEDIA_INTRO} />
+            </motion.div>
+          )}
+
+          {/* Media phase — one question at a time */}
+          {phase === "media_phase" && mediaQuestions.length > 0 && (
+            <motion.div
+              key={`media-q-${mediaCurrentIndex}`}
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }}
+              transition={{ duration: 0.3 }}
+            >
+              {/* Progress */}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                    Media {mediaCurrentIndex + 1} of {mediaQuestions.length}
+                  </span>
+                </div>
+                <div className="progress-track">
+                  <motion.div
+                    className="progress-fill"
+                    animate={{ width: `${(mediaCurrentIndex / mediaQuestions.length) * 100}%` }}
+                    transition={{ duration: 0.4 }}
+                  />
+                </div>
+              </div>
+
+              <Nyx dialogue={mediaQuestions[mediaCurrentIndex].question} className="mb-5" />
+
+              <div>
+                <textarea
+                  className="textarea resize-none"
+                  rows={4}
+                  placeholder="Write freely — or skip if nothing comes to mind."
+                  value={mediaCurrentAnswer}
+                  onChange={(e) => setMediaCurrentAnswer(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                      handleMediaAnswer(mediaCurrentAnswer, false);
+                    }
+                    if (e.key === "Tab") {
+                      e.preventDefault();
+                      handleMediaAnswer("", true);
+                    }
+                  }}
+                  autoFocus
+                />
+                <div className="flex items-center justify-between mt-3">
+                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                    Ctrl+Enter to answer / Tab to skip
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="btn-ghost text-xs"
+                      onClick={() => handleMediaAnswer("", true)}
+                    >
+                      {mediaQuestions[mediaCurrentIndex].skipLabel}
+                    </button>
+                    <button
+                      className="btn-primary"
+                      onClick={() => handleMediaAnswer(mediaCurrentAnswer, false)}
+                      disabled={!mediaCurrentAnswer.trim()}
+                    >
+                      {mediaCurrentIndex === mediaQuestions.length - 1 ? "Finish →" : "Next →"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Media skip — both questions skipped */}
+          {phase === "media_skip" && (
+            <motion.div
+              key="media-skip"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
+              <Nyx dialogue={MEDIA.MEDIA_SKIP} />
+            </motion.div>
+          )}
+
+          {/* Media complete */}
+          {phase === "media_complete" && (
+            <motion.div
+              key="media-complete"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
+              <Nyx dialogue={MEDIA.MEDIA_COMPLETE} />
             </motion.div>
           )}
 
